@@ -1,0 +1,22 @@
+{
+  "name": "ai-skills",
+  "owner": {
+    "name": "Clément Farkas",
+    "url": "https://github.com/cdfarkas"
+  },
+  "metadata": {
+    "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "pr-todo",
+      "description": "Report every open pull request a developer must act on in a GitHub organization — review requested, authored or assigned — as a raw table with clickable links, merge status, the concrete reason each PR is stuck, and age.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/pr-todo"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/ai-skills/tree/main/skills/pr-todo"
+    }
+  ]
+}
