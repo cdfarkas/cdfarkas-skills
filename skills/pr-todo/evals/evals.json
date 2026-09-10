@@ -1,0 +1,46 @@
+{
+  "skill_name": "pr-todo",
+  "notes": "Substitute ORG, USER and OTHER_USER for a GitHub organization you can read, your own login, and a colleague's. UNKNOWN_USER must be a login that does not exist.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "own-prs-md",
+      "prompt": "list the PRs I need to deal with in ORG",
+      "expected_output": "The script's markdown table, verbatim, with no prose around it.",
+      "assertions": [
+        "First line is the header `PR to-do · @USER · ORG · <date> · N`",
+        "Markdown table with the six columns PR | Role | Status | Blockers | Age | Title",
+        "Every data row carries a clickable [repo#N](github pull url) link",
+        "No prose: every non-empty line is the header or a table line",
+        "At least one row names a concrete blocking reason",
+        "Own PRs are reported (role contains author or assignee)",
+        "Every row has a status token from the fixed vocabulary"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "other-dev-slack",
+      "prompt": "generate the PR to-do report for OTHER_USER in ORG, Slack format, I want to paste it into a message",
+      "expected_output": "The script's mrkdwn bullet list, verbatim.",
+      "assertions": [
+        "First line is the bold mrkdwn header `*PR to-do · @OTHER_USER · ORG · <date> · N*`",
+        "Every bullet carries a Slack mrkdwn link <url|repo#N>",
+        "No markdown Slack would not render (no table separator, no [text](url))",
+        "No prose: every non-empty line is the header or a bullet",
+        "Every bullet has a status token from the fixed vocabulary",
+        "Blocking reasons are present on at least one bullet"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "unknown-user",
+      "prompt": "which open PRs in ORG are waiting on UNKNOWN_USER? raw list only, nothing else",
+      "expected_output": "One stderr line saying the login does not exist. Never an empty report.",
+      "assertions": [
+        "The answer says the login does not exist on GitHub",
+        "No invented table and no 'nothing to do' for a login that does not exist",
+        "Raw: a single line, no explanation around the error"
+      ]
+    }
+  ]
+}
