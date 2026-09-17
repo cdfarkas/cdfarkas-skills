@@ -10,7 +10,8 @@ part almost nobody publishes, and it is the reason to trust any of this.
 
 ```
 /plugin marketplace add cdfarkas/ai-skills
-/plugin install pr-todo@ai-skills
+/plugin install pr-todo@cdfarkas-skills
+/plugin install sentry-triage@cdfarkas-skills
 ```
 
 Or copy the skill folder into `~/.claude/skills/` (or your agent's equivalent).
@@ -39,6 +40,39 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 Scores: 7/7, 6/6 and 3/3 on its assertions with the skill; 2/6 and 0/3 on the two
 baselines that completed without it. Full numbers and method in
 [`skills/pr-todo/evals/RESULTS.md`](skills/pr-todo/evals/RESULTS.md).
+
+### `sentry-triage`
+
+The unresolved issues of a Sentry project ranked by impact, then what to fix first.
+The script computes the severity (users × 10 + events, weighted by level, unhandled
+and escalating / regressed), the trend, the innermost in-app frame, the failure origin
+and the clusters sharing one root cause; the agent adds the complexity call and the
+priority order, reading the code when the project's `CLAUDE.md` says where it lives.
+
+```
+Sentry triage · your-org/web · prod · 14d · is:unresolved · 30 issues
+
+| Issue | Sev | Score | Users | Events | Trend | Status | Origin | Where | Title |
+|---|---|---|---|---|---|---|---|---|---|
+| [WEB-2G](https://your-org.sentry.io/issues/77240272/) | high | 239 | 11 | 49 | ↑ | escalating | app | config/routing/routes.tsx:66 useRoutes | Error: useAuthContext must be used within a Provider |
+| [WEB-17](https://your-org.sentry.io/issues/76670525/) | high | 237 | 21 | 27 | → | ongoing | network | dist/client/proxy-client.js:213 w | ApiClientError: API Error: 401 |
+| [WEB-C](https://your-org.sentry.io/issues/76441190/) | critical | 410 | 24 | 33 | → | ongoing | browser | - | Error: [object HTMLLinkElement] |
+
+Clusters (one root cause, fix once):
+- network / API Error: 401 — 6 issues · 79 users · 101 events · score 928 · WEB-17, WEB-18, WEB-P, …
+```
+
+Paste a Sentry issue-stream URL and everything is read from it; `--issue WEB-2G`
+details one issue (frames innermost first, release / browser / url breakdown);
+`--format slack` for a channel; `--doctor` checks tools, token, scopes and access
+before the first run. Project-agnostic and platform-agnostic (macOS, Linux, Windows
+under Git Bash): a `CLAUDE.md` `## Sentry` section
+declares the org, the path mapping, the known noise and the owners. Needs a Sentry
+API token, `curl` and `jq`.
+
+Evaluation harness in [`skills/sentry-triage/evals/`](skills/sentry-triage/evals/);
+the with/without benchmark is not run yet and
+[`RESULTS.md`](skills/sentry-triage/evals/RESULTS.md) says so.
 
 ## Not Claude-only
 
