@@ -143,7 +143,7 @@ def main() -> int:
             continue
         results = grader(answer.read_text(), ctx)
         report[name] = {
-            "passed": sum(1 for _, ok, _ in results),
+            "passed": sum(1 for _, ok, _ in results if ok),
             "total": len(results),
             "expectations": [{"text": t, "passed": ok, "evidence": ev[:200]} for t, ok, ev in results],
         }
