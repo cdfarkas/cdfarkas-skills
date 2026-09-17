@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.1.0"
+    "version": "0.2.0"
   },
   "plugins": [
     {
