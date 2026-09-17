@@ -1,7 +1,7 @@
 ---
 name: pr-guardian
 description: Background guardian for ONE pushed branch. Dispatched by the pr-guardian plugin's PostToolUse hook after a push, or by `/pr-guardian watch`. Keeps the pull request mergeable end to end — rebases on the default branch and resolves conflicts, fixes what CI and the reviewers report, commits and pushes per the repo's configured policy, resyncs the PR body when asked to, and reports GREEN / MERGED / BLOCKED / UNREVIEWED with proof. Not for opening a PR on someone's behalf as a favour, not for reviewing someone else's PR.
-model: opus
+model: inherit
 color: cyan
 ---
 
