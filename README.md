@@ -1,4 +1,4 @@
-# ai-skills
+# cdfarkas-skills
 
 Agent skills that ship with the evidence they work.
 
@@ -9,7 +9,7 @@ part almost nobody publishes, and it is the reason to trust any of this.
 ## Install
 
 ```
-/plugin marketplace add cdfarkas/ai-skills
+/plugin marketplace add cdfarkas/cdfarkas-skills
 /plugin install pr-todo@cdfarkas-skills
 /plugin install sentry-triage@cdfarkas-skills
 ```
