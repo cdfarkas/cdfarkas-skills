@@ -13,8 +13,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Manifest parses
-        run: python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+      - name: Manifests parse
+        run: |
+          python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+          python3 -c "import json; json.load(open('skills/pr-guardian/hooks/hooks.json'))"
 
       - name: Every skill has the required frontmatter
         run: python3 scripts/validate-skills.py
@@ -22,6 +24,7 @@ jobs:
       - name: Shell scripts parse
         run: |
           for f in $(find skills -name '*.sh'); do bash -n "$f"; done
+          bash skills/pr-guardian/scripts/pr-guardian.sh --help | grep -q '^Usage:'
 
       - name: jq programs parse
         run: |
@@ -61,6 +64,7 @@ jobs:
             --arg format md --arg mode list --argjson title_width 60 | grep -q '^no issues$'
           bash skills/sentry-triage/scripts/sentry-triage.sh --help | grep -q '^Usage:'
           bash skills/pr-todo/scripts/pr-todo.sh --help | grep -q '^Usage:'
+          bash skills/pr-guardian/scripts/pr-guardian.sh --help | grep -q '^Usage:'
 
       - name: Doctor reports the missing token instead of crashing
         env:
@@ -71,3 +75,14 @@ jobs:
           rc=$?
           echo "$out"
           [ "$rc" -eq 1 ] && echo "$out" | grep -q '^FAIL  token:'
+
+      - name: Guardian doctor reports the missing gh auth instead of crashing
+        env:
+          HOME: ${{ runner.temp }}
+          GH_TOKEN: ""
+        run: |
+          set +e
+          out="$(bash skills/pr-guardian/scripts/pr-guardian.sh --doctor 2>&1)"
+          rc=$?
+          echo "$out"
+          [ "$rc" -eq 1 ] && echo "$out" | grep -q '^FAIL  gh'
