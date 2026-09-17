@@ -1,6 +1,6 @@
 # How these skills are built
 
-Four rules, each of which came from something going wrong.
+Five rules, each of which came from something going wrong.
 
 ## 1. Behaviour goes in a script, not in prose
 
@@ -63,6 +63,26 @@ Read-only skills (`pr-todo`, `sentry-triage`) do not carry the flag.
 `scripts/validate-skills.py` enforces it with a coarse grep, on purpose: a false
 positive is fixed by adding the flag, a false negative would be a push nobody could
 preview.
+
+## 5. Docs follow the code, and CI checks that you looked
+
+The `pr-guardian` pull request merged 1,400 lines of scripts, hooks and an agent with
+no `README.md` for the skill, no row in the root table, and a "Next" section still
+calling it in progress. Nothing in CI cared, because every check read the code and
+none read the documentation.
+
+`scripts/check-docs-sync.py` now runs on every PR. It always checks the structure —
+every skill has `README.md`, `SKILL.md` and `reference.md`, a row in the root table,
+and names its `agents/` and `hooks/` when it ships them — and on a PR it checks the
+diff: a change to a skill's scripts, hooks, agent or `SKILL.md` must touch that skill's
+`README.md` or `reference.md`; a change to the repo tooling must touch `CLAUDE.md` or
+this file; a plugin added or removed in the marketplace manifest must change the root
+`README.md`.
+
+The diff rule is a "did you look" gate, not a proof of quality: a one-word edit to the
+README passes it. Its job is to make forgetting the docs a CI failure instead of a
+follow-up nobody opens. Run against the tree that PR #7 left behind, it fails on five
+lines, which is what it should have done at the time.
 
 ## On the tooling
 
