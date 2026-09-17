@@ -1,0 +1,45 @@
+{
+  "skill_name": "sentry-triage",
+  "notes": "Substitute ORG, PROJECT (slug) and PROJECT_ID for a Sentry project you can read with SENTRY_AUTH_TOKEN, ENV for one of its environments. UNKNOWN_PROJECT must be a slug that does not exist in ORG.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "url-triage",
+      "prompt": "analyse the Sentry errors of our front end https://ORG.sentry.io/issues/?environment=ENV&project=PROJECT_ID&query=is%3Aunresolved&referrer=issue-stream&statsPeriod=14d and tell me what to fix first by severity and complexity",
+      "expected_output": "The script's markdown table and Clusters block verbatim, then a ranked list of at most 10 entries each carrying a severity and a complexity call.",
+      "assertions": [
+        "First non-empty line is the header `Sentry triage · ORG/PROJECT · ENV · 14d · is:unresolved · N issues`",
+        "Markdown table with the ten columns Issue | Sev | Score | Users | Events | Trend | Status | Origin | Where | Title",
+        "Every data row carries a clickable [SHORT-ID](sentry permalink) link",
+        "Every data row has a severity from the fixed vocabulary critical/high/medium/low and an origin from app/vendor/network/browser",
+        "A `Clusters` block follows the table when any cluster exists",
+        "A ranked list follows, numbered, at most 10 entries",
+        "Every ranked entry names a severity and a complexity from S/M/L/noise",
+        "The ranked list does not put a browser-origin entry first unless it is marked noise"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "slack-format",
+      "prompt": "give me the Sentry triage of ORG/PROJECT in ENV for Slack, I want to paste it in the channel",
+      "expected_output": "The script's mrkdwn bullet list, verbatim, with the bold header.",
+      "assertions": [
+        "First line is the bold mrkdwn header `*Sentry triage · ORG/PROJECT · ENV · 14d · is:unresolved · N issues*`",
+        "Every issue bullet carries a Slack mrkdwn link <permalink|SHORT-ID>",
+        "No markdown Slack would not render (no table separator, no [text](url))",
+        "Every issue bullet has a severity from the fixed vocabulary"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "unknown-project",
+      "prompt": "triage the Sentry issues of project UNKNOWN_PROJECT in ORG, raw output only",
+      "expected_output": "One stderr line saying the project does not exist. Never an empty report or a ranking.",
+      "assertions": [
+        "The answer says the project is unknown in ORG",
+        "No table, no `no issues`, no ranked list for a project that does not exist",
+        "Raw: a single line, no explanation around the error"
+      ]
+    }
+  ]
+}

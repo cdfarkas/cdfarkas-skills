@@ -1,5 +1,5 @@
 {
-  "name": "ai-skills",
+  "name": "cdfarkas-skills",
   "owner": {
     "name": "Clément Farkas",
     "url": "https://github.com/cdfarkas"
@@ -17,6 +17,15 @@
       "skills": ["./skills/pr-todo"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/ai-skills/tree/main/skills/pr-todo"
+    },
+    {
+      "name": "sentry-triage",
+      "description": "Rank the unresolved Sentry issues of a project by impact — deterministic severity score, trend, innermost in-app frame, failure origin, root-cause clusters — then decide what to fix first by severity and complexity.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/sentry-triage"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/ai-skills/tree/main/skills/sentry-triage"
     }
   ]
 }
