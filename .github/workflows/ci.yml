@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Manifests parse
-        run: |
-          python3 -c "import json,sys; json.load(open('.claude-plugin/marketplace.json'))"
-          for f in skills/*/evals/evals.json; do python3 -c "import json;json.load(open('$f'))"; done
+      - name: Manifest parses
+        run: python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
 
       - name: Every skill has the required frontmatter
         run: python3 scripts/validate-skills.py
@@ -28,9 +28,12 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq jq
           for f in $(find skills -name '*.jq'); do jq -n -f "$f" </dev/null >/dev/null 2>&1 || jq --version >/dev/null; done
 
-      - name: Graders import cleanly
-        run: |
-          for f in $(find skills -name 'grade.py'); do python3 -c "import ast;ast.parse(open('$f').read())"; done
+      - name: Evals, graders and published results agree
+        run: python3 scripts/validate-evals.py
+
+      - name: Marketplace version bumped
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check-version-bump.py "origin/${{ github.base_ref }}"
 
       - name: No personal paths or private organizations
         run: |

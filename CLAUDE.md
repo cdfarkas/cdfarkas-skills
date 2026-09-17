@@ -19,9 +19,12 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
    (with the skill / without), what the baselines got wrong, and every run that did
    not complete reported as **not measured** — never as a zero. If the run is not
    done yet, `RESULTS.md` says so; an absent or flattering results file is a defect.
-4. **Run the CI locally** (`python3 scripts/validate-skills.py`, `bash -n` on every
-   `.sh`, the personal-path grep) before committing; the `windows` job in
-   `.github/workflows/ci.yml` needs a PR to run, so open one.
+4. **Run the CI locally** (`python3 scripts/validate-skills.py`,
+   `python3 scripts/validate-evals.py`, `bash -n` on every `.sh`, the personal-path
+   grep) before committing; the `windows` job in `.github/workflows/ci.yml` needs a PR
+   to run, so open one. Any PR touching `skills/`, `scripts/` or the marketplace
+   manifest bumps `metadata.version` in `.claude-plugin/marketplace.json` (semver; CI
+   refuses the PR otherwise).
 
 ## Layout of a skill
 
