@@ -1,6 +1,6 @@
 # How these skills are built
 
-Three rules, each of which came from something going wrong.
+Four rules, each of which came from something going wrong.
 
 ## 1. Behaviour goes in a script, not in prose
 
@@ -48,6 +48,21 @@ looked like a crushing win for the skill.
 It is reported as **not measured**. A published evaluation is only worth
 something if the inconvenient runs are in it, and the temptation to keep a
 flattering artefact is exactly why the rule has to be written down.
+
+## 4. A skill that changes state ships `--dry-run`
+
+The first three skills only read. `pr-guardian` is the first one that writes: it
+rebases, amends, force-pushes and edits pull requests, from a background agent the
+person is not watching. An agent that pushes must be inspectable before it acts.
+
+So every script under `skills/*/scripts/` that can push, open, edit, merge or close
+a pull request, or call a write endpoint of the API, takes `--dry-run`: it prints
+every action it would take, one `dry-run: would …` line each, and executes none.
+Read-only skills (`pr-todo`, `sentry-triage`) do not carry the flag.
+
+`scripts/validate-skills.py` enforces it with a coarse grep, on purpose: a false
+positive is fixed by adding the flag, a false negative would be a push nobody could
+preview.
 
 ## On the tooling
 

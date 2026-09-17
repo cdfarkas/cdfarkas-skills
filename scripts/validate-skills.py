@@ -7,6 +7,7 @@ Rules enforced (https://agentskills.io/specification):
   - `description` is at most 1024 characters
   - the body stays under 500 lines, so it does not swamp the context when loaded
   - every referenced local file exists
+  - a script under scripts/ that pushes, edits a PR or calls a write endpoint takes --dry-run
 """
 from __future__ import annotations
 
@@ -18,6 +19,7 @@ MAX_NAME = 64
 MAX_DESCRIPTION = 1024
 MAX_BODY_LINES = 500
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+MUTATING_RE = re.compile(r"git push|gh pr (create|edit|merge|close)|gh api .*(-X|--method) (POST|PATCH|PUT|DELETE)")
 
 
 def parse_frontmatter(text: str) -> dict[str, str]:
@@ -71,6 +73,11 @@ def check(path: Path) -> list[str]:
             continue
         if not (path.parent / ref).exists():
             errors.append(f"{path}: references '{ref}', which does not exist")
+
+    for script in sorted(path.parent.glob("scripts/*.sh")):
+        code = script.read_text()
+        if MUTATING_RE.search(code) and "--dry-run" not in code:
+            errors.append(f"{script}: changes state (push / PR write / write API) but takes no --dry-run")
 
     return errors
 
