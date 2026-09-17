@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.2.1"
+    "version": "0.3.0"
   },
   "plugins": [
     {
@@ -26,6 +26,17 @@
       "skills": ["./skills/sentry-triage"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/sentry-triage"
+    },
+    {
+      "name": "pr-guardian",
+      "description": "Watch one pushed branch until its pull request is green, merged or blocked: rebase on the default branch, fix what CI and the reviewers report, one guardian per branch with a write lock against the human, orphan re-adoption at session start, and --dry-run for the plan without any push.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/pr-guardian"],
+      "agents": ["./skills/pr-guardian/agents/pr-guardian.md"],
+      "hooks": "./skills/pr-guardian/hooks/hooks.json",
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/pr-guardian"
     }
   ]
 }

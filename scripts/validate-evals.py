@@ -10,6 +10,7 @@ Rules enforced:
   - RESULTS.md exists and has, per case, a row `| `<name>` | N/M ...` where M is the case's
     assertion count and N <= M; `not measured` is accepted in the without-skill columns only;
     a missing row is a warning, not an error, when the file says the run is `not yet run`
+  - a skill directory with no evals/evals.json is reported as a warning, never silently skipped
 """
 from __future__ import annotations
 
@@ -136,13 +137,18 @@ def check(evals_dir: Path) -> tuple[list[str], list[str]]:
 
 
 def main() -> int:
-    dirs = sorted(Path("skills").glob("*/evals"))
-    if not dirs:
-        print("no evals found under skills/*/evals")
+    skills = sorted(p for p in Path("skills").glob("*/") if p.is_dir())
+    if not skills:
+        print("no skills found under skills/")
         return 1
 
-    all_errors, all_warnings = [], []
-    for d in dirs:
+    all_errors, all_warnings, dirs = [], [], []
+    for skill in skills:
+        d = skill / "evals"
+        if not (d / "evals.json").exists():
+            all_warnings.append(f"{skill.as_posix()}: no evals/ yet")
+            continue
+        dirs.append(d)
         errors, warnings = check(d)
         all_errors += errors
         all_warnings += warnings
