@@ -16,7 +16,7 @@
       "strict": false,
       "skills": ["./skills/pr-todo"],
       "category": "development",
-      "homepage": "https://github.com/cdfarkas/ai-skills/tree/main/skills/pr-todo"
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/pr-todo"
     },
     {
       "name": "sentry-triage",
@@ -25,7 +25,7 @@
       "strict": false,
       "skills": ["./skills/sentry-triage"],
       "category": "development",
-      "homepage": "https://github.com/cdfarkas/ai-skills/tree/main/skills/sentry-triage"
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/sentry-triage"
     }
   ]
 }

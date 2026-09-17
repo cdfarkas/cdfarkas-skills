@@ -41,8 +41,11 @@ Windows run it from Git Bash exactly as above (never PowerShell); `curl` ships w
 Git for Windows, `jq` comes from `winget install jqlang.jq` — `--doctor` says which
 one is missing.
 
-Show the table **verbatim** first — one row per issue, then the `Clusters` block. Column
-semantics, the score formula and the origin rules: [reference.md](reference.md).
+The answer **starts with the script's first line** — the `Sentry triage · …` header, or
+its bold Slack form — and shows the table and the `Clusters` block verbatim. No sentence
+before it, no restatement after it: a Slack message is pasted as-is, and anything you
+write above the header is what the reader has to delete first. Column semantics, the
+score formula and the origin rules: [reference.md](reference.md).
 
 ## Step 2 — add the complexity call and the priority order
 
@@ -53,6 +56,11 @@ short ranked list, top 5 to 10, with one line per entry:
 ```
 1. [SHORT-ID or cluster] — severity <sev> · complexity <S|M|L|noise> — <what to do, one clause>
 ```
+
+`severity` is the table's `Sev` value; `complexity` is exactly one of `S`, `M`, `L`,
+`noise` — a closed vocabulary, so two triages of the same project read the same way.
+An issue that is already gone (last seen days ago, zero events since a release) is
+still one of the four: `noise`, with "resolve it" as the action.
 
 Complexity rubric — decide from `Origin`, `Where`, the cluster and, for the top entries,
 `--issue` output (frames innermost first, release / browser / url breakdown):
@@ -92,5 +100,8 @@ in the raw table), map paths to files, name the owner it names.
 ## Failures
 
 The script exits non-zero with the cause on its **last** stderr line: no token, token
-rejected, unknown org / project / issue, an HTTP error from Sentry. Relay that line and
-stop. Never produce a ranking from a partial table or from memory of the Sentry UI.
+rejected, unknown org / project / issue, an HTTP error from Sentry. That line **is** the
+whole answer: relay it verbatim, alone, and stop. It already names what to fix (the
+slug, the token, the scope); rerun commands and `--doctor` suggestions are for you to
+act on if asked, not lines to add — the caller asked for a triage, not a tutorial. Never
+produce a ranking from a partial table or from memory of the Sentry UI.
