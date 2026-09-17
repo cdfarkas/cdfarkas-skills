@@ -38,6 +38,14 @@ jobs:
         if: github.event_name == 'pull_request'
         run: python3 scripts/check-version-bump.py "origin/${{ github.base_ref }}"
 
+      - name: Docs follow the code
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 scripts/check-docs-sync.py "origin/${{ github.base_ref }}"
+          else
+            python3 scripts/check-docs-sync.py
+          fi
+
       - name: No personal paths or private organizations
         run: |
           if grep -rInE '/Users/[a-z]+|/home/[a-z]+' --include='*.md' --include='*.sh' --include='*.jq' --include='*.py' --include='*.json' .; then

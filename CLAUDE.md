@@ -20,11 +20,20 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
    not complete reported as **not measured** — never as a zero. If the run is not
    done yet, `RESULTS.md` says so; an absent or flattering results file is a defect.
 4. **Run the CI locally** (`python3 scripts/validate-skills.py`,
-   `python3 scripts/validate-evals.py`, `bash -n` on every `.sh`, the personal-path
-   grep) before committing; the `windows` job in `.github/workflows/ci.yml` needs a PR
-   to run, so open one. Any PR touching `skills/`, `scripts/` or the marketplace
-   manifest bumps `metadata.version` in `.claude-plugin/marketplace.json` (semver; CI
-   refuses the PR otherwise).
+   `python3 scripts/validate-evals.py`, `python3 scripts/check-docs-sync.py origin/main`,
+   `bash -n` on every `.sh`, the personal-path grep) before committing; the `windows`
+   job in `.github/workflows/ci.yml` needs a PR to run, so open one. Any PR touching
+   `skills/`, `scripts/` or the marketplace manifest bumps `metadata.version` in
+   `.claude-plugin/marketplace.json` (semver; CI refuses the PR otherwise). A script
+   that pushes, edits a PR or calls a write endpoint takes `--dry-run`
+   (`validate-skills.py` refuses it otherwise; rule 4 of the docs says why).
+5. **Docs follow the code.** Any change to a skill's `scripts/`, `hooks/`, `agents/` or
+   `SKILL.md` updates its `README.md` or `reference.md` in the same PR; a change to
+   `scripts/*.py` or `.github/workflows/ci.yml` updates this file or
+   `docs/how-these-skills-are-built.md`; a plugin added to or removed from the
+   marketplace manifest changes the root `README.md` table. `scripts/check-docs-sync.py`
+   enforces it, and always checks that every skill has its three Markdown files, its row
+   in the root table, and names its `agents/` and `hooks/` when it ships them.
 
 ## Layout of a skill
 
@@ -37,6 +46,8 @@ skills/<name>/
   evals/evals.json  prompts + assertions
   evals/grade.py    regex grader, no model in the loop
   evals/RESULTS.md  the published run
+  agents/           optional: a plugin that ships a background agent (one .md per agent)
+  hooks/            optional: a plugin that ships Claude Code hooks (hooks.json + the scripts)
 ```
 
 Register the skill in `.claude-plugin/marketplace.json`, give it a `README.md` in its folder (usage, sample output, evaluation) and one row in the root `README.md` table.

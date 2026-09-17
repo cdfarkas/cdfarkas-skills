@@ -21,6 +21,7 @@ evaluation is published as it happened, including the runs that failed or did no
 |---|---|---|
 | [`pr-todo`](skills/pr-todo/) | Every open pull request you have to act on in a GitHub organization, as one raw table with links, status and blockers | `gh`, `jq` |
 | [`sentry-triage`](skills/sentry-triage/) | The unresolved issues of a Sentry project ranked by impact, then what to fix first by severity and complexity | Sentry token, `curl`, `jq` |
+| [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run` | `gh`, `jq`, `git`, `timeout` |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -55,6 +56,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin marketplace add cdfarkas/cdfarkas-skills
 /plugin install pr-todo@cdfarkas-skills
 /plugin install sentry-triage@cdfarkas-skills
+/plugin install pr-guardian@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
@@ -81,8 +83,7 @@ The reasoning behind the rules, and what each one caught:
 
 ## Next
 
-`pr-guardian`: a background agent that keeps a pushed branch mergeable (rebase, CI
-fixes, review triage), with a `--dry-run` mode and a prerequisite doctor. In progress.
+`pr-guardian` shipped without its evaluation; the with/without run is the next step.
 
 ## Author
 
