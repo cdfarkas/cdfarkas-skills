@@ -8,8 +8,10 @@ description: >
   and re-adoption of the branches whose guardian died with its session. Use when someone
   says "watch my PR", "babysit this branch until green", "is my branch mergeable", "keep
   this PR mergeable", or right after a push. `--dry-run` prints the diagnosis and the action
-  plan without pushing anything. Needs git, gh (authenticated, repo scope), jq, coreutils
-  timeout and bash 3.2 or newer — Git Bash on Windows.
+  plan without pushing anything. Also checks the prerequisites and offers to install or
+  configure what is missing: "set up pr-guardian", "check my setup", "is my machine ready".
+  Needs git, gh (authenticated, repo scope), jq, coreutils timeout and bash 3.2 or newer —
+  Git Bash on Windows.
 license: Apache-2.0
 ---
 
@@ -21,15 +23,33 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
 
 | Caller says | Do |
 |---|---|
-| "is it set up", "check my setup", `doctor` | `bash <skill-dir>/scripts/pr-guardian.sh doctor` — relay its lines verbatim, one `ok` / `FAIL` / `skip` per check. |
+| "set up pr-guardian", "check my setup", "is my machine ready", `doctor` | the **setup** procedure below: `doctor`, then `doctor --fix` and `config init` as proposals. |
 | "watch my PR", "babysit this branch", "keep it mergeable", `watch [<branch>] [--dry-run]` | the **watch** procedure below. No branch named: the current one. |
 | "is my branch mergeable", "what would the guardian do", `watch --dry-run` | **watch** with `--dry-run`: the agent runs `doctor` and `plan`, prints the action list, pushes nothing, and ends with `DRY-RUN`. |
 | "which guardians are running", `status` | `bash <skill-dir>/scripts/pr-guardian.sh list`, then one `plan --repo <repo> --branch <branch>` per live entry; relay both. |
 
+## setup
+
+1. `bash <skill-dir>/scripts/pr-guardian.sh doctor`. Relay its lines verbatim, one `ok` /
+   `FAIL` / `skip` per check; every check runs, the exit code is 1 when any failed.
+2. No `FAIL`: say in one line that the machine is ready, then go to step 5.
+3. Any `FAIL`: `bash <skill-dir>/scripts/pr-guardian.sh doctor --fix`. It runs nothing; it
+   prints one `fix: <command>` per failed check whose hint is a command. Present each one
+   as a proposal and run only what the user approves, never an install command of your
+   own. `gh auth login` is interactive: the user runs it in their own terminal. On Windows
+   say the command may need an elevated terminal. A `FAIL` with no `fix:` line (`shell`,
+   `state`) is fixed by hand as its hint says.
+4. After a fix, run `doctor` again and relay it. Stop while a `FAIL` remains.
+5. Propose `bash <skill-dir>/scripts/pr-guardian.sh config init --dir <repo>` in one line
+   (`exists: <path>` means the repo already has one; `--dry-run` shows the file) and ask
+   two things: does a bot open the PRs (then `pr.create` is `false`) and does the team
+   squash-merge (then `commits` is `"amend"`). Explain a key with its row in the table
+   below, one line each, when the user asks or answers.
+
 ## watch
 
 1. `bash <skill-dir>/scripts/pr-guardian.sh doctor`. On a `FAIL` line, relay it and stop —
-   nothing is dispatched until it passes.
+   nothing is dispatched until it passes; the **setup** procedure is the way to fix it.
 2. Resolve the target: `repo` as `owner/name` from `git remote get-url origin`, `branch`
    (the argument, else `git rev-parse --abbrev-ref HEAD`), `worktree` from
    `git rev-parse --show-toplevel`, HEAD from `git rev-parse --short HEAD`.
@@ -56,7 +76,8 @@ before the plugin was installed, a guardian someone stopped, or a dry run.
 ## Configuration
 
 Read from `<repo>/.pr-guardian.json`, else `~/.config/pr-guardian.json`, else the default.
-`bash <skill-dir>/scripts/pr-guardian.sh config <key> --dir <repo>` prints the value in force.
+`bash <skill-dir>/scripts/pr-guardian.sh config <key> --dir <repo>` prints the value in force;
+`config init --dir <repo>` writes the file with the defaults when the repo has none.
 
 | Key | Default | Effect |
 |---|---|---|
@@ -77,8 +98,9 @@ description from the commit body:
 
 `bash <skill-dir>/scripts/pr-guardian.sh doctor` — bash 3.2+, git, gh authenticated with the
 `repo` scope, jq, coreutils `timeout`, Git Bash on Windows, a writable state directory
-(`$PR_GUARDIAN_HOME`, default `~/.pr-guardian`). One line per check, exit 1 on the first
-`FAIL`, with the install command for the OS.
+(`$PR_GUARDIAN_HOME`, default `~/.pr-guardian`). One line per check, every check runs, exit
+1 when any `FAIL`, each with the install command for the OS; `doctor --fix` lists those
+commands as `fix:` lines and runs none of them.
 
 State file, lock semantics, hook events, `plan` lines, report vocabulary and every failure
 line: [reference.md](reference.md).

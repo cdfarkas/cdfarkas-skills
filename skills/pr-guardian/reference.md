@@ -62,6 +62,12 @@ The PreToolUse hook lets a command through when it starts with, or contains,
 `config: <file> is not valid JSON, using defaults` on stderr and falls back. Keys are
 merged over the defaults, so a file may set one key only.
 
+`config init [--dir <repo>]` writes `.pr-guardian.json` holding the five defaults at the
+top level of the git repository containing `--dir` (in `--dir` itself when it is not a
+repository) and prints the path. It never overwrites: `exists: <path>`, exit 0, when the
+file is already there. Under `--dry-run` it prints `dry-run: would write <path>: <json>`
+and writes nothing.
+
 | Key | Default | Type |
 |---|---|---|
 | `orgs` | `[]` | array of owner logins; empty means any |
@@ -135,10 +141,19 @@ commits, pr.sync_body, review_bots)` · `plan: need --repo and --branch` · `pla
 read <repo> (gh repo view failed — auth, name or network)` · `unknown command: <x>`
 (exit 2, usage follows) · no command at all prints the usage and exits 1.
 
-`doctor` prints `FAIL  <check>: <cause> (<install command>)` and exits 1 on the first
-failing check, in this order: bash (3.2 or newer), git, gh, gh auth, scopes (`skip` on a
-fine-grained token, which reports none), jq, timeout (or `gtimeout`), shell (Git Bash
-required on Windows), state (`$PR_GUARDIAN_HOME` writable).
+`doctor` runs every check and prints one line each, in this order: bash (3.2 or newer),
+git, gh, gh auth, scopes (`skip` on a fine-grained token, which reports none), jq, timeout
+(or `gtimeout`), shell (Git Bash required on Windows), state (`$PR_GUARDIAN_HOME`
+writable). A failed check prints `FAIL  <check>: <cause> (<install command>)` and the
+run goes on; the exit code is 1 when any check failed, 0 otherwise. Without `gh` the
+`gh auth` and `scopes` lines read `skip  …: gh not installed`; without authentication,
+`scopes` reads `skip  scopes: not checked (gh auth failed)`.
+
+`doctor --fix` prints the same lines, then one `fix: <command>` per `FAIL` whose hint is a
+command — `brew`, `winget`, `apt` or `dnf` `install …`, `gh auth login`, `gh auth refresh
+-s repo` — and runs nothing; `nothing to fix` when no check failed. A `FAIL` on `shell` or
+`state` has no `fix:` line: its hint is an action, not a command. On Linux the hint names
+both `apt` and `dnf`; the one the distribution has applies.
 
 ## Portability
 
