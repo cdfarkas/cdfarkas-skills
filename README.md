@@ -21,7 +21,7 @@ evaluation is published as it happened, including the runs that failed or did no
 |---|---|---|
 | [`pr-todo`](skills/pr-todo/) | Every open pull request you have to act on in a GitHub organization, as one raw table with links, status and blockers | `gh`, `jq` |
 | [`sentry-triage`](skills/sentry-triage/) | The unresolved issues of a Sentry project ranked by impact, then what to fix first by severity and complexity | Sentry token, `curl`, `jq` |
-| [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run` | `gh`, `jq`, `git`, `timeout` |
+| [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run`; checks its prerequisites and proposes the fix for what is missing | `gh`, `jq`, `git`, `timeout` |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -31,10 +31,11 @@ Each folder has its own README with usage, output and evaluation results.
 |---|---|---|---|---|
 | `pr-todo` | 7/7, 6/6, 3/3 | not measured, 2/6, 0/3 | not measured | [RESULTS.md](skills/pr-todo/evals/RESULTS.md) |
 | `sentry-triage` | 8/8, 4/4, 3/3 | 2/8, 2/4, 1/3 | 129 s and 85k with, 334 s and 117k without | [RESULTS.md](skills/sentry-triage/evals/RESULTS.md) |
+| `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
-sessions. `not measured` means the baseline run aborted (an API rate limit, in the
-`pr-todo` case) before producing an answer; it is reported as such, never as a zero.
+sessions. `not measured` means the run aborted (an API rate limit, in the `pr-todo`
+case) or the harness did not report the figure; it is reported as such, never as a zero.
 
 ## What the output looks like
 
@@ -83,7 +84,7 @@ The reasoning behind the rules, and what each one caught:
 
 ## Next
 
-`pr-guardian` shipped without its evaluation; the with/without run is the next step.
+`pr-guardian` is evaluated on its setup path only. The watch loop (rebase, CI fixes, review triage) needs a live pull request with real checks and reviewers to be measured; no harness for it yet.
 
 ## Author
 

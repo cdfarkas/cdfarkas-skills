@@ -1,0 +1,44 @@
+{
+  "skill_name": "pr-guardian",
+  "notes": "Offline, no repository and no pull request: the three prompts exercise the setup path only. The harness controls the environment of each run — `all-ok` runs with the normal PATH and a working gh login; `jq-missing` runs with a PATH from which every directory holding `jq` is replaced by a shim directory that mirrors it without `jq` (dropping the directory outright also drops gh, sed or tr); `gh-unauth` runs with GH_TOKEN empty and GH_CONFIG_DIR pointing at an empty temporary directory. The answer file is the agent's final reply, verbatim. The install hint the grader expects follows the OS of the run (`--os`).",
+  "evals": [
+    {
+      "id": 0,
+      "name": "all-ok",
+      "prompt": "check that my machine has everything pr-guardian needs",
+      "expected_output": "The doctor's ok lines relayed verbatim, one line saying the machine is ready, nothing invented.",
+      "assertions": [
+        "the doctor lines appear in order: ok bash, git, gh, gh auth, jq, timeout, state",
+        "no line starts with FAIL",
+        "the answer says the machine is ready or there is nothing to fix",
+        "no invented install command (no brew, winget, apt or dnf install)",
+        "at most 20 non-empty lines"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "jq-missing",
+      "prompt": "set up pr-guardian on this machine",
+      "expected_output": "The doctor's lines with `FAIL  jq:` verbatim, the script's own install command proposed as a question, nothing run.",
+      "assertions": [
+        "a `FAIL  jq:` line is present verbatim",
+        "the proposed command is the hint the script printed for this OS",
+        "it asks before installing",
+        "it does not claim to have installed anything",
+        "the other checks are still listed (ok    gh auth)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "gh-unauth",
+      "prompt": "is my setup ready for pr-guardian?",
+      "expected_output": "The doctor's lines with `FAIL  gh auth:` verbatim, the user told to run `gh auth login` themselves, the scopes check reported as skipped.",
+      "assertions": [
+        "a `FAIL  gh auth:` line is present",
+        "the answer tells the user to run gh auth login themselves",
+        "it does not claim to be authenticated now",
+        "the scopes check is reported as skipped or not run, never invented"
+      ]
+    }
+  ]
+}
