@@ -62,12 +62,17 @@ Commands:
         Keys and defaults: orgs [] · pr.create true · commits "stack" · pr.sync_body false
         · review_bots []. Read from .pr-guardian.json at the repo root, else
         ~/.config/pr-guardian.json, else the default.
+  config   init [--dir <repo>]                        write .pr-guardian.json with the defaults
+        at the repo root (or in --dir when it is not a git repository); prints the path,
+        `exists: <path>` when one is already there. With --dry-run, prints what it would write.
   plan     --repo <owner/name> --branch <ref> [--dir <repo>]
         Read-only diagnosis: the PR, distance to the default branch, checks, review,
         then one `next:` line per action a guardian would take. Never writes.
-  doctor | --doctor
+  doctor | --doctor [--fix]
         Check bash, git, gh (auth, repo scope), jq, timeout, the shell and the state
-        dir — one ok/FAIL/skip line each, exit 1 on the first FAIL.
+        dir — one ok/FAIL/skip line each, every check runs, exit 1 if any FAIL.
+        --fix adds one `fix: <command>` line per FAIL whose hint is a command, and runs
+        nothing; `nothing to fix` when every check passed.
   -h, --help
 
 --dry-run   Every mutating command (register, set, done, acquire, release, prune) prints
@@ -327,6 +332,13 @@ cmd_config() {
   [[ -z "$key" ]] && { echo "config: need a key (orgs, pr.create, commits, pr.sync_body, review_bots)" >&2; return 1; }
   local top file=""
   top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || top=""
+  if [[ "$key" == "init" ]]; then
+    file="${top:-$dir}/.pr-guardian.json"
+    [[ -f "$file" ]] && { echo "exists: $file"; return 0; }
+    dry "write $file: $CONFIG_DEFAULTS" && return 0
+    jq -n "$CONFIG_DEFAULTS" > "$file" && echo "$file"
+    return
+  fi
   [[ -n "$top" && -f "$top/.pr-guardian.json" ]] && file="$top/.pr-guardian.json"
   [[ -z "$file" && -f "$HOME/.config/pr-guardian.json" ]] && file="$HOME/.config/pr-guardian.json"
   if [[ -n "$file" ]] && jq -e . "$file" >/dev/null 2>&1; then
@@ -424,50 +436,55 @@ _install_hint() {
   esac
 }
 
+_fail() { echo "FAIL  $*"; FAILS="$FAILS${FAILS:+$'\n'}FAIL  $*"; }
+
 cmd_doctor() {
+  local fix=0 FAILS="" scopes os
+  [[ "${1:-}" == "--fix" ]] && fix=1
   if (( BASH_VERSINFO[0] > 3 || (BASH_VERSINFO[0] == 3 && BASH_VERSINFO[1] >= 2) )); then echo "ok    bash: $BASH_VERSION"
-  else echo "FAIL  bash: $BASH_VERSION, need 3.2 or newer ($(_install_hint bash Git.Git))"; return 1; fi
+  else _fail "bash: $BASH_VERSION, need 3.2 or newer ($(_install_hint bash Git.Git))"; fi
 
   if command -v git >/dev/null 2>&1; then echo "ok    git: $(command -v git)"
-  else echo "FAIL  git: not installed ($(_install_hint git Git.Git))"; return 1; fi
+  else _fail "git: not installed ($(_install_hint git Git.Git))"; fi
 
   if command -v gh >/dev/null 2>&1; then echo "ok    gh: $(command -v gh)"
-  else echo "FAIL  gh: not installed ($(_install_hint gh GitHub.cli))"; return 1; fi
-  if gh auth status >/dev/null 2>&1; then
+  else _fail "gh: not installed ($(_install_hint gh GitHub.cli))"; fi
+  if ! command -v gh >/dev/null 2>&1; then echo "skip  gh auth: gh not installed"; echo "skip  scopes: gh not installed"
+  elif gh auth status >/dev/null 2>&1; then
     echo "ok    gh auth: $(gh api user --jq .login 2>/dev/null || echo authenticated)"
-  else echo "FAIL  gh auth: not authenticated (gh auth login)"; return 1; fi
-  local scopes
-  scopes=$(gh api -i user 2>/dev/null | tr -d '\r' | sed -n 's/^[Xx]-[Oo][Aa]uth-[Ss]copes: *//p' | head -1)
-  if [[ -z "$scopes" ]]; then echo "skip  scopes: fine-grained token, cannot verify"
-  elif [[ " $(printf '%s' "$scopes" | tr ',' ' ') " == *" repo "* ]]; then echo "ok    scopes: $scopes"
-  else echo "FAIL  scopes: token lacks the repo scope (gh auth refresh -s repo); have: $scopes"; return 1; fi
+    scopes=$(gh api -i user 2>/dev/null | tr -d '\r' | sed -n 's/^[Xx]-[Oo][Aa]uth-[Ss]copes: *//p' | head -1)
+    if [[ -z "$scopes" ]]; then echo "skip  scopes: fine-grained token, cannot verify"
+    elif [[ " $(printf '%s' "$scopes" | tr ',' ' ') " == *" repo "* ]]; then echo "ok    scopes: $scopes"
+    else _fail "scopes: token lacks the repo scope (gh auth refresh -s repo); have: $scopes"; fi
+  else _fail "gh auth: not authenticated (gh auth login)"; echo "skip  scopes: not checked (gh auth failed)"; fi
 
   if command -v jq >/dev/null 2>&1; then echo "ok    jq: $(command -v jq)"
-  else echo "FAIL  jq: not installed ($(_install_hint jq jqlang.jq))"; return 1; fi
+  else _fail "jq: not installed ($(_install_hint jq jqlang.jq))"; fi
 
   if command -v timeout >/dev/null 2>&1; then echo "ok    timeout: $(command -v timeout)"
   elif command -v gtimeout >/dev/null 2>&1; then echo "ok    timeout: $(command -v gtimeout)"
   else
     case "$(uname -s)" in
-      Darwin) echo "FAIL  timeout: not installed (brew install coreutils)" ;;
-      MINGW*|MSYS*|CYGWIN*|Windows*) echo "FAIL  timeout: not found; it ships with Git for Windows (winget install Git.Git)" ;;
-      *) echo "FAIL  timeout: not installed (apt install coreutils / dnf install coreutils)" ;;
+      Darwin) _fail "timeout: not installed (brew install coreutils)" ;;
+      MINGW*|MSYS*|CYGWIN*|Windows*) _fail "timeout: not found; it ships with Git for Windows (winget install Git.Git)" ;;
+      *) _fail "timeout: not installed (apt install coreutils / dnf install coreutils)" ;;
     esac
-    return 1
   fi
 
-  local os; os=$(uname -s 2>/dev/null || echo unknown)
+  os=$(uname -s 2>/dev/null || echo unknown)
   case "$os" in
     MINGW*|MSYS*|CYGWIN*) echo "ok    shell: Git Bash ($os)" ;;
     *)
-      if [[ "${OS:-}" == "Windows_NT" && -z "${MSYSTEM:-}" ]]; then
-        echo "FAIL  shell: run under Git Bash (Git for Windows)"; return 1
-      fi
-      echo "ok    shell: bash on $os" ;;
+      if [[ "${OS:-}" == "Windows_NT" && -z "${MSYSTEM:-}" ]]; then _fail "shell: run under Git Bash (Git for Windows)"
+      else echo "ok    shell: bash on $os"; fi ;;
   esac
 
   if mkdir -p "$STATE_DIR" 2>/dev/null && [[ -w "$STATE_DIR" ]]; then echo "ok    state: $STATE_DIR"
-  else echo "FAIL  state: cannot create or write $STATE_DIR (set PR_GUARDIAN_HOME to a writable dir)"; return 1; fi
+  else _fail "state: cannot create or write $STATE_DIR (set PR_GUARDIAN_HOME to a writable dir)"; fi
+
+  [[ -z "$FAILS" ]] && { (( fix )) && echo "nothing to fix"; return 0; }
+  (( fix )) && printf '%s\n' "$FAILS" | sed -n 's/.*(\([^)]*\)).*/\1/p' | grep -E '^(brew|winget|apt|dnf) install |^gh auth ' | sed 's/^/fix: /'
+  return 1
 }
 
 _args=()
@@ -488,7 +505,7 @@ case "${1:-}" in
   prune)    shift; cmd_prune "$@";;
   config)   shift; cmd_config "$@";;
   plan)     shift; cmd_plan "$@";;
-  doctor|--doctor) cmd_doctor;;
+  doctor|--doctor) shift; cmd_doctor "$@";;
   -h|--help) usage; exit 0;;
   "") usage; exit 1;;
   *) echo "unknown command: $1" >&2; usage >&2; exit 2;;

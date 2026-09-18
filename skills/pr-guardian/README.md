@@ -10,12 +10,14 @@ session.
 ## Usage
 
 ```
-/pr-guardian doctor
+/pr-guardian doctor [--fix]
+/pr-guardian config init [--dir <repo>] [--dry-run]
 /pr-guardian watch [<branch>] [--dry-run]
 /pr-guardian status
 ```
 
-`doctor` checks the prerequisites, one line per check, and stops on the first `FAIL`:
+`doctor` checks the prerequisites, one line per check; every check runs and the exit code
+is 1 when any of them failed:
 
 ```
 ok    bash: 5.3.9(1)-release
@@ -28,6 +30,16 @@ ok    timeout: /opt/homebrew/bin/timeout
 ok    shell: bash on Darwin
 ok    state: ~/.pr-guardian
 ```
+
+A failed check names its cause and the command that fixes it, `FAIL  jq: not installed
+(brew install jq)`. `doctor --fix` prints those commands back as `fix: brew install jq`
+lines and runs none of them (`nothing to fix` when every check passed): the agent shows each
+one as a proposal and runs only what you approve; `gh auth login` is interactive, so you run
+it yourself. `config init` writes `.pr-guardian.json` at the repo root with the five
+defaults and prints the path, `exists: <path>` when the repo already has one, and with
+`--dry-run` prints the file instead of writing it. The setup conversation is: `doctor`, the
+`fix:` proposals, `doctor` again, then `config init` with two questions — does a bot open
+your PRs (`pr.create: false`), does the team squash-merge (`commits: "amend"`).
 
 `watch` registers the branch and dispatches the agent in the background; with
 `--dry-run` the agent runs the read-only diagnosis, prints the actions it would take
@@ -55,7 +67,7 @@ State file, lock semantics, `plan` lines, report vocabulary and every failure li
 
 Read from `<repo>/.pr-guardian.json`, else `~/.config/pr-guardian.json`, else the
 defaults. `bash scripts/pr-guardian.sh config <key> --dir <repo>` prints the value in
-force.
+force; `config init --dir <repo>` writes the file with the defaults when the repo has none.
 
 | Key | Default | Effect |
 |---|---|---|
@@ -82,11 +94,15 @@ description from the commit body:
 
 git, `gh` authenticated with the `repo` scope, `jq`, coreutils `timeout`, bash 3.2 or
 newer — Git Bash on Windows. `doctor` checks each one and prints the install command for
-the OS on a `FAIL`.
+the OS on a `FAIL`; `doctor --fix` lists those commands for the agent to propose.
 
 ## Evaluation
 
-Not yet run. The with/without harness (`evals/evals.json`, `evals/grade.py`) is coming;
-`evals/RESULTS.md` will carry the method, the run date and the scores when it does. Until
-then this skill ships without the evidence the other two have, and this README says so
-rather than showing a number.
+Scores: 5/5, 5/5 and 4/4 on its assertions with the skill; 2/5, 2/5 and 1/4 without,
+in 22 s against 308 s of mean wall-clock. Three prompts on the setup path (everything
+installed, `jq` missing, `gh` not authenticated), offline, with the harness controlling
+`PATH` and `GH_CONFIG_DIR`, graded by regex. Full numbers, the contaminated first
+baseline run and the two assertion fixes in [`evals/RESULTS.md`](evals/RESULTS.md).
+The watch loop itself (rebase, CI fixes, review triage) is not covered: it needs a live
+pull request, and the same code runs unchanged as a private guardian; what this public
+skill adds, and what is evaluated, is the setup.
