@@ -58,10 +58,12 @@ if ! ls knip.json knip.jsonc knip.ts knip.js .kniprc .kniprc.json >/dev/null 2>&
   _DEFAULTED=" · no Knip config, using Knip defaults"
 fi
 
-# --no-exit-code: Knip exits non-zero when it finds issues; keep that from tripping set -e.
+# --no-exit-code stops an issues-found exit tripping set -e; a config error can still exit
+# non-zero while emitting a full report, so gate on JSON presence/parseability, not exit code.
 _ERR="$(mktemp)"
 trap 'rm -f "$_ERR"' EXIT
-if ! _JSON="$($_KNIP --reporter json --no-exit-code 2>"$_ERR")"; then
+_JSON="$($_KNIP --reporter json --no-exit-code 2>"$_ERR" || true)"
+if [ -z "$_JSON" ]; then
   tail -n 1 "$_ERR" >&2 || true
   echo "knip failed to run via '$_RUNNER' (is Node installed?)" >&2
   exit 1
@@ -74,7 +76,7 @@ printf '%s' "$_JSON" | jq empty >/dev/null 2>&1 || {
 # tr -d '\r': the Windows jq build terminates lines with CRLF; strip CR so paths match on disk.
 _q() { printf '%s' "$_JSON" | jq -r "$1" | tr -d '\r'; }
 
-_FILES="$(_q '.files[]?')"
+_FILES="$(_q '.issues[]? | .files[]? | .name')"
 _EXPORTS="$(_q '.issues[]? | . as $i | (.exports // [])[] | "\($i.file):\(.line // "?")\t\(.name)"')"
 _TYPES="$(_q '.issues[]? | . as $i | (.types // [])[] | "\($i.file):\(.line // "?")\t\(.name)"')"
 _DEPS="$(_q '[.issues[]? | (.dependencies // [], .devDependencies // [], .optionalPeerDependencies // [])[] | .name] | unique | .[]')"

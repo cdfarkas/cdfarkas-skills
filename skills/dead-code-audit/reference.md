@@ -8,7 +8,7 @@ computed. The skill's judgment rules (false positives, candidate discipline) are
 
 | Section | Knip source | Meaning |
 |---|---|---|
-| Unused files | `.files[]` | A file no other file imports. The biggest win and the biggest false-positive risk — see the guardrails. |
+| Unused files | `.issues[].files[].name` | A file no other file imports. The biggest win and the biggest false-positive risk — see the guardrails. |
 | Unused exports | `.issues[].exports[]` (`file:line  name`) | An exported value nothing imports. Often safe to downgrade to a local, or drop. |
 | Unused exported types | `.issues[].types[]` (`file:line  name`) | An exported `type`/`interface` nothing imports. |
 | Unused dependencies | `.issues[].dependencies` + `.devDependencies` + `.optionalPeerDependencies` | A package in the manifest that nothing imports. Candidate for removal. |
