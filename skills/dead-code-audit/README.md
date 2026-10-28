@@ -50,6 +50,8 @@ Category meanings and the score definition: [reference.md](reference.md).
 
 ## Evaluation
 
-Not yet measured. The with-skill / without-skill benchmark (`evals/`, graded by regex per
-the repo's method) is pending; this folder ships the script and docs first. Until that run
-exists, treat the skill as unproven against a baseline.
+Three deterministic cases run against a committed, self-contained fixture
+(`evals/fixtures/sample-ts-project/`) with planted dead code and two live false-positive
+traps, graded by regex. With the skill they score 7/7, 4/4 and 4/4; the without-skill
+baseline is not measured yet. The run also exposed and fixed a config-detection defect in
+the script. Method, scores and reproduction: [`evals/RESULTS.md`](evals/RESULTS.md).

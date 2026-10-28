@@ -53,8 +53,13 @@ case "$_RUNNER" in
 esac
 
 _DEFAULTED=""
-if ! ls knip.json knip.jsonc knip.ts knip.js .kniprc .kniprc.json >/dev/null 2>&1 \
-   && ! grep -q '"knip"' package.json 2>/dev/null; then
+_HAS_CFG=""
+# Test each candidate: `ls a b c` exits non-zero when any arg is missing, so it
+# mislabels a repo that has only knip.json as having no config.
+for _f in knip.json knip.jsonc knip.ts knip.js .kniprc .kniprc.json; do
+  [ -e "$_f" ] && { _HAS_CFG=1; break; }
+done
+if [ -z "$_HAS_CFG" ] && ! grep -q '"knip"' package.json 2>/dev/null; then
   _DEFAULTED=" · no Knip config, using Knip defaults"
 fi
 
