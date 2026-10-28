@@ -22,6 +22,7 @@ evaluation is published as it happened, including the runs that failed or did no
 | [`pr-todo`](skills/pr-todo/) | Every open pull request you have to act on in a GitHub organization, as one raw table with links, status and blockers | `gh`, `jq` |
 | [`sentry-triage`](skills/sentry-triage/) | The unresolved issues of a Sentry project ranked by impact, then what to fix first by severity and complexity | Sentry token, `curl`, `jq` |
 | [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run`; checks its prerequisites and proposes the fix for what is missing | `gh`, `jq`, `git`, `timeout` |
+| [`dead-code-audit`](skills/dead-code-audit/) | Dead code in a JS/TS repo, found with Knip zero-install — unused files, exports, types and dependencies, categorized and flagged for likely false positives, with a before/after removable-LOC score | `node`, `jq` |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -32,6 +33,7 @@ Each folder has its own README with usage, output and evaluation results.
 | `pr-todo` | 7/7, 6/6, 3/3 | not measured, 2/6, 0/3 | not measured | [RESULTS.md](skills/pr-todo/evals/RESULTS.md) |
 | `sentry-triage` | 8/8, 4/4, 3/3 | 2/8, 2/4, 1/3 | 129 s and 85k with, 334 s and 117k without | [RESULTS.md](skills/sentry-triage/evals/RESULTS.md) |
 | `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
+| `dead-code-audit` | 7/7, 4/4, 4/4 | 0/7, 0/4, 0/4 | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
 sessions. `not measured` means the run aborted (an API rate limit, in the `pr-todo`
@@ -58,6 +60,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin install pr-todo@cdfarkas-skills
 /plugin install sentry-triage@cdfarkas-skills
 /plugin install pr-guardian@cdfarkas-skills
+/plugin install dead-code-audit@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
