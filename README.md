@@ -22,6 +22,7 @@ evaluation is published as it happened, including the runs that failed or did no
 | [`pr-todo`](skills/pr-todo/) | Every open pull request you have to act on in a GitHub organization, as one raw table with links, status and blockers | `gh`, `jq` |
 | [`sentry-triage`](skills/sentry-triage/) | The unresolved issues of a Sentry project ranked by impact, then what to fix first by severity and complexity | Sentry token, `curl`, `jq` |
 | [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run`; checks its prerequisites and proposes the fix for what is missing | `gh`, `jq`, `git`, `timeout` |
+| [`dead-code-audit`](skills/dead-code-audit/) | Dead code in a JS/TS repo, found with Knip zero-install — unused files, exports, types and dependencies, categorized and flagged for likely false positives, with a before/after removable-LOC score | `node`, `jq` |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -58,6 +59,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin install pr-todo@cdfarkas-skills
 /plugin install sentry-triage@cdfarkas-skills
 /plugin install pr-guardian@cdfarkas-skills
+/plugin install dead-code-audit@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
