@@ -33,7 +33,7 @@ Each folder has its own README with usage, output and evaluation results.
 | `pr-todo` | 7/7, 6/6, 3/3 | not measured, 2/6, 0/3 | not measured | [RESULTS.md](skills/pr-todo/evals/RESULTS.md) |
 | `sentry-triage` | 8/8, 4/4, 3/3 | 2/8, 2/4, 1/3 | 129 s and 85k with, 334 s and 117k without | [RESULTS.md](skills/sentry-triage/evals/RESULTS.md) |
 | `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
-| `dead-code-audit` | 7/7, 4/4, 4/4 | not measured | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
+| `dead-code-audit` | 7/7, 4/4, 4/4 | 0/7, 0/4, 0/4 | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
 sessions. `not measured` means the run aborted (an API rate limit, in the `pr-todo`

@@ -15,6 +15,13 @@ that report.
 Run on 2026-10-28 with Knip 6.43.0 on Windows Git Bash, Node 24. The script's own run
 is about 2.5 s once Knip is cached by `npx` (the first run also fetches Knip).
 
+The without-skill baseline was measured the same day. Three isolated general-purpose
+agents (model sonnet) each got one of the three `evals.json` prompts, pointed at a
+**neutral copy** of the fixture with its explanatory README removed, and had no
+knowledge of the skill, its script, Knip or the expected output format. None of them
+ran Knip — the neutral copy has no `node_modules` — so all three read the files by hand.
+Their three answers were graded by the same `grade.py`, unchanged.
+
 ## What the fixture plants
 
 | Planted | Where | Category it should land in |
@@ -36,17 +43,45 @@ traps is the agent's documented judgment step (SKILL.md, step 2), not the script
 
 | Case | With the skill | Without |
 |---|---|---|
-| `findings` | 7/7 | not measured |
-| `score` | 4/4 | not measured |
-| `guardrails` | 4/4 | not measured |
+| `findings` | 7/7 | 0/7 |
+| `score` | 4/4 | 0/4 |
+| `guardrails` | 4/4 | 0/4 |
 
 The with-skill column is the deterministic script output measured on the committed
 fixture, graded by `grade.py` (exit 0, every assertion passing). The without-skill
-column is honestly **not measured** this round: a bare-agent baseline — an agent with
-no skill asked the same prompts, inventing its own report shape and re-deriving Knip's
-invocation — is the obvious follow-up, but it needs an isolated agent harness that this
-round did not run. Until it exists, these numbers show the skill is internally
-consistent (script, fixture and grader agree), not that it beats an unaided agent.
+column is the three bare sonnet agents described in the method above, graded by the same
+`grade.py` (exit 1).
+
+**What the 0/N does and does not mean.** Read plainly, the baseline is not a detection
+failure. All three bare agents found every piece of real dead code — the dead file
+`src/unused-widget.ts`, the unused export `buildLegacyUrl`, the unused exported type
+`DeprecatedPayload`, and the unused dependency `left-pad` — and all three correctly
+reasoned that the two guardrail traps are live: `src/plugins/plugin-a.ts` reached by a
+runtime `import()` and `src/registry.ts` named as a string in `app.config.json`. On the
+substance they were right.
+
+The scores are 0 because `grade.py` asserts the skill's **deterministic output
+contract**, not detection. It matches a fixed header line, the five named category
+sections with exact counts (`Unused files (3)`), `- src/<file>` candidate lines, the
+`removable lines of code: 18 across 3 unused file(s)` figure, and the
+"candidates — verify against the guardrails before removing" framing. The bare agents
+wrote free-form prose with absolute Windows paths, their own LOC count (19, counting
+physical lines rather than the script's 18), no category counts and no fixed framing, so
+every regex missed. On the `guardrails` case the gap is sharper: the agents separated the
+two traps out as live — arguably the more useful answer for a human — while the grader
+rewards the script's behaviour of leaving all three files in one undifferentiated
+candidate list, because ruling the traps out is documented as the agent's judgment step
+(SKILL.md, step 2), not the script's job.
+
+So what the skill buys over a capable bare agent here is not "finds more dead code" — on
+this fixture it does not. It buys **determinism** (the same report every run, so the
+grader is pure regex with no model in the loop), a **fixed, scriptable format** a tool or
+a reviewer can parse, **speed** (~2.5 s versus three agents reading files), and that it
+**runs Knip** instead of hand-reading the import graph — the only one of those four that
+matters on a repo too large to read by hand, where a bare agent's manual sweep stops
+scaling and starts missing edges Knip resolves. On a nine-file fixture the manual sweep
+happens to be complete; that is a property of the fixture, not evidence the skill is
+redundant.
 
 ## What the eval checks
 
