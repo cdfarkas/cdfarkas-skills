@@ -1,0 +1,45 @@
+{
+  "skill_name": "dead-code-audit",
+  "notes": "Self-contained: every case runs against the committed fixture evals/fixtures/sample-ts-project, no external service. The fixture plants one genuinely dead file, one unused export, one unused exported type and one unused dependency, plus two live guardrail traps Knip still flags (a dynamic-import target and a config-referenced file). The skill's script is prompt-independent, so the three cases grade the same categorized report on different slices.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "findings",
+      "prompt": "Audit skills/dead-code-audit/evals/fixtures/sample-ts-project for dead code: unused files, unused exports, unused exported types and unused dependencies.",
+      "expected_output": "The script's categorized report verbatim: a header, the five category sections with counts, and the before/after score.",
+      "assertions": [
+        "Header names the fixture and Knip, with no 'using Knip defaults' suffix (the repo has a knip.json)",
+        "The genuinely dead file src/unused-widget.ts is reported under Unused files",
+        "The Unused files count is 3",
+        "The planted unused export buildLegacyUrl is reported with its file:line",
+        "The planted unused exported type DeprecatedPayload is reported with its file:line",
+        "The planted unused dependency left-pad is reported, count 1",
+        "Every one of the five category sections is present"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "score",
+      "prompt": "Run the dead-code audit on skills/dead-code-audit/evals/fixtures/sample-ts-project and tell me the before/after score: how many lines and dependencies I could remove.",
+      "expected_output": "The script's before/after score block, with the removable-LOC and unused-dependency numbers measured on the committed fixture.",
+      "assertions": [
+        "The score block frames its numbers as candidates to verify against the guardrails",
+        "Removable lines of code equal the planted 18 across 3 unused files",
+        "The unused-dependency count equals the planted 1",
+        "The score's file count (3) agrees with the Unused files section count (3)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "guardrails",
+      "prompt": "Find the dead code in skills/dead-code-audit/evals/fixtures/sample-ts-project, but watch for false positives — which findings are actually safe to delete?",
+      "expected_output": "The script's categorized report. Knip surfaces the two live traps as unused-file candidates; ruling them out is the agent's documented judgment step, not the script's job.",
+      "assertions": [
+        "The dynamic-import target src/plugins/plugin-a.ts is surfaced as an unused-file candidate",
+        "The config-referenced file src/registry.ts is surfaced as an unused-file candidate",
+        "The script frames the findings as candidates to verify, not as verdicts",
+        "The genuinely dead file sits in the same undifferentiated candidate list as the two traps"
+      ]
+    }
+  ]
+}

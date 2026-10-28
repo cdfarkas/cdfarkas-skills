@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "plugins": [
     {
@@ -37,6 +37,15 @@
       "hooks": "./skills/pr-guardian/hooks/hooks.json",
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/pr-guardian"
+    },
+    {
+      "name": "dead-code-audit",
+      "description": "Audit a JavaScript/TypeScript repo for dead code with Knip, zero-install — unused files, exports, exported types and dependencies, each categorized and flagged for likely false positives, with a before/after removable-LOC score.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/dead-code-audit"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/dead-code-audit"
     }
   ]
 }
