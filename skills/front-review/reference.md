@@ -18,7 +18,8 @@ order. An empty list prints `- (none)`.
 | `## Gates` | eslint (with `react-hooks` and `jsx-a11y` yes/no), stylelint, tsc, axe, visual regression, size-limit, each CI workflow with its step names |
 | `## Rule switches` | P axis on/off per package, `R11` on/off, the ids each overlay switches off |
 | `## Floor in effect` | each overlay's `## Floor` text with its scope, else the default floor below |
-| `## Candidates (n)` | `- <id> <file>:<line> <mechanism>`, then `Suppressed by the overlay (n)` with the overlay that switched each one off |
+| `## Candidates (n)` | `- <id> <file>:<line> <mechanism>`, then `Suppressed by the overlay (n)` with the overlay that switched each one off (hints included) |
+| `## Hints (n)` | `- <id> <file>:<line> <mechanism>`: leads the review reports or names on the Not checked line with a reason |
 | `## Vocabulary (en|fr)` | the report's section names, closing lines and verdict line |
 | `## Overlay text` | the full text of each overlay, between `--- <path> ---` and `--- end <path> ---` |
 
@@ -42,14 +43,16 @@ tool configs other than bundler configs are not front files.
 
 ### Candidates
 
-Mechanical checks whose hits must appear in the review, suppressed only by an overlay that
-switches the id off for that file.
+Mechanical checks, suppressed only by an overlay that switches the id off for that file. A
+**candidate** must appear in the review, as a finding or on the Not checked line. A **hint**
+(P1) names a mechanism whose cost depends on judgement: report it as a finding, or name it on
+the Not checked line with the reason it was not.
 
 | Id | Fires on | Scope |
 |---|---|---|
 | A1 | a CSS/SCSS/Sass/Less file with `appearance: none` and no `forced-colors` anywhere in the file; cites the first `appearance: none` line | CSS group |
 | R1 | a JSX opening tag where a `{...spread}` follows an `aria-*` attribute; cites the spread line and names the attribute and its line | TSX/JSX group |
-| P1 | a module-level, non-exported object literal whose values read an imported CSS module (`styles.x`) and whose every other use is an index read (`map[key]`; `typeof map` ignored) | TSX/JSX and TS/JS groups, publishable package only |
+| P1 (hint) | a module-level, non-exported object literal whose values read an imported CSS module (`styles.x`) and whose every other use is an index read (`map[key]`; `typeof map` ignored) | TSX/JSX and TS/JS groups, publishable package only |
 
 Publishable: the nearest `package.json` has `exports` or `main` and no `"private": true`.
 
