@@ -105,11 +105,12 @@ defects, one defect its overlay switches off, and three traps a keyword-matching
 reports. The grader credits a finding by its `file:line` and mechanism, not by the skill's rule
 ids, and scores substance and format apart, so a baseline is not failed on vocabulary.
 
-Run on 2026-10-31, sonnet for both arms: with the skill 7/7, 6/6, 7/7 (substance 6/6, 5/5,
-4/4); without 3/7, 5/6, 5/7 (substance 3/6, 4/5, 3/4). The gap on substance is modest: the
-baselines found the forced-colors and target-size defects too, and some real problems the
-fixture did not plant. What the skill added is the reduced-motion hover cue (missed by every
-baseline), the spread-order defect with a line, and a consistent report shape; the baselines
-respected the overlay as well as the skill did. The P1 check was demoted to a hint after the
-run. Details:
+Run on 2026-10-31 with `skill-creator`: 3 runs per arm on each prompt, on Opus 5.5, graded blind.
+Pass rate 100% with the skill against 66% ± 22% without. Per prompt, the baselines scored 3/7 (three
+runs), 5/6 (three runs) and 3/7, 6/7, 6/7. The skill costs about +135 s and +26k tokens per review.
+What it adds is the reduced-motion hover cue (missed by every baseline), the spread-order defect and a
+consistent report shape; the baselines respected the overlay and the traps as well as the skill did,
+and found more real issues outside the planted list. The skill under-triggers: it rarely loads on its
+own (2/30 and 4/30 should-trigger runs, no false trigger), and `skill-creator`'s description
+optimizer found no better description in 5 iterations, so invoke it explicitly. Details:
 [`evals/RESULTS.md`](evals/RESULTS.md).

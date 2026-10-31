@@ -35,11 +35,12 @@ Each folder has its own README with usage, output and evaluation results.
 | `sentry-triage` | 8/8, 4/4, 3/3 | 2/8, 2/4, 1/3 | 129 s and 85k with, 334 s and 117k without | [RESULTS.md](skills/sentry-triage/evals/RESULTS.md) |
 | `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
 | `dead-code-audit` | 7/7, 4/4, 4/4 | 0/7, 0/4, 0/4 | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
-| `front-review` | 7/7, 6/6, 7/7 | 3/7, 5/6, 5/7 (substance 10/15 against 15/15) | not measured | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
+| `front-review` | 7/7, 6/6, 7/7 (3 runs, identical) | 3/7, 5/6, 3/7 to 6/7 (3 runs) | 287 s and 138k with, 152 s and 112k without | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
-sessions. `not measured` means the run aborted (an API rate limit, in the `pr-todo`
-case) or the harness did not report the figure; it is reported as such, never as a zero.
+sessions (`front-review`: 3 runs per arm). `not measured` means the run aborted (an API rate
+limit, in the `pr-todo` case) or the harness did not report the figure; it is reported as such,
+never as a zero.
 
 ## What the output looks like
 
