@@ -3,21 +3,25 @@
 Method: the three prompts in `evals.json` review a **committed, self-contained fixture**,
 `evals/fixtures/sample-ui-lib/`: a tiny publishable React component library with a root
 `REVIEW.md` overlay, a second overlay in `src/legacy/`, ESLint, stylelint and axe declared in
-`package.json`, and nothing installed, so no render can run. Each prompt was given to an agent
-**with** the skill and to an agent **without** it, and both answers were graded by `grade.py`:
-pure regex over the answer text, no model in the loop, so a rerun grades identically.
+`package.json`, and nothing installed, so no render can run.
 
-Run on 2026-10-31. Six isolated subagents, one per prompt and arm, all on model sonnet. In
-each prompt the fixture path was replaced by a neutral copy in a temporary directory outside
-any git repository, byte-identical to the committed fixture (checked with `diff -r`), so the
-overlay files are there but nothing in the folder names the plants. The with-skill agents also
-got a copy of `SKILL.md`, `reference.md` and `scripts/`, without `evals/` or the README. Both
-arms were told not to use the Skill tool or any other `SKILL.md`. Wall-clock time and tokens
-were not recorded: **not measured**.
+Run on 2026-10-31 with Anthropic's `skill-creator` skill (the `claude-plugins-official`
+plugin): each of the three evals run 3 times with the skill and 3 times without, 18 runs, the
+executors on Claude Opus 5.5 as independent subagents launched in parallel.
 
-The six answers are not committed: no skill in this repository commits its run answers, and
-these carry absolute paths of the machine they ran on. Anyone can regenerate them with the
-prompts above and grade them with the command at the end.
+- **Isolation.** The fixture was copied to a neutral temporary folder outside the repository.
+  The with-skill runs got a copy of the skill holding only `SKILL.md`, `reference.md` and
+  `scripts/`: no `evals/`, no expected answers. Answers were written to neutral file names, so
+  graders could not tell the arms apart. Both arms received the same harness context (the
+  author's global agent instructions are injected into every subagent): equal in both arms,
+  but not a clean-room setup.
+- **Grading.** Blind, by three independent grader subagents following `skill-creator`'s
+  `agents/grader.md`, one per eval, six anonymised answers each, every claim checked against
+  the fixture. `grade.py` (regex, no model) ran as a cross-check. Aggregated with
+  `skill-creator`'s `scripts/aggregate_benchmark.py`, reviewed in its eval viewer (static HTML,
+  not committed).
+
+The 18 answers are not committed: no skill in this repository commits its run answers.
 
 ## What the fixture plants
 
@@ -27,7 +31,7 @@ prompts above and grade them with the command at the end.
 | R1 | `src/Input.tsx` | `{...rest}` after `aria-invalid`, while `data-invalid` sits before it: a caller's `aria-invalid={false}` contradicts the error border |
 | A2 | `src/Button.module.css` | the only hover cue is a transform, reset to `none` under reduced motion |
 | A3 | `src/IconButton.*` | an 18 px target whose `label` (its accessible name) is optional |
-| P1 (hint) | `src/Button.tsx` | a module-level variant → CSS-module class map, in a package with `exports` and no `private` |
+| P1 (hint) | `src/Button.tsx` | a module-level variant → CSS-module class map, in a package with `exports` and no `private`: reported, or named under Not checked with a reason |
 
 Must not be reported:
 
@@ -35,134 +39,118 @@ Must not be reported:
 |---|---|---|
 | R1 switched off | `src/legacy/OldField.tsx` | `src/legacy/REVIEW.md` lists R1 under `## Do not report` |
 | X1 trap | `invalid` in `src/Input.tsx` | a boolean mirroring one ARIA state is fine |
-| X7 trap | `useLayoutEffect` in `src/Checkbox.tsx` | dependency-less on purpose: a native click clears `indeterminate` without a prop change, so a dependency array would break the re-application |
+| X7 trap | `useLayoutEffect` in `src/Checkbox.tsx` | dependency-less on purpose: a native click clears `indeterminate` without a prop change |
 | X4 trap | `src/Switch.*` | a 24 px target meets SC 2.5.8; a 44 px rule would flag it |
 
 ## Scores
 
+`skill-creator` aggregate, mean ± standard deviation over 9 runs per arm:
+
+| Metric | With the skill | Without | Delta |
+|---|---|---|---|
+| Pass rate | 100% ± 0% | 66% ± 22% | +0.34 |
+| Time | 286.5 s ± 72.3 s | 151.7 s ± 16.4 s | +134.9 s |
+| Tokens | 138,465 ± 10,792 | 112,233 ± 3,188 | +26,232 |
+
+Assertions passed per run (runs 1, 2, 3):
+
 | Case | With the skill | Without |
 |---|---|---|
-| `full-review` | 7/7 | 3/7 |
-| `a11y-pass` | 6/6 | 5/6 |
-| `fr-pr-style` | 7/7 | 5/7 |
+| `full-review` | 7/7, 7/7, 7/7 | 3/7, 3/7, 3/7 |
+| `a11y-pass` | 6/6, 6/6, 6/6 | 5/6, 5/6, 5/6 |
+| `fr-pr-style` | 7/7, 7/7, 7/7 | 3/7, 6/7, 6/7 |
 
-Split into substance (findings and absences) and format (the skill's report shape):
-
-| Case | With: substance | With: format | Without: substance | Without: format |
-|---|---|---|---|---|
-| full-review | 6/6 | 1/1 | 3/6 | 0/1 |
-| a11y-pass | 5/5 | 1/1 | 4/5 | 1/1 |
-| fr-pr-style | 4/4 | 3/3 | 3/4 | 2/3 |
-| **total** | **15/15** | **5/5** | **10/15** | **3/5** |
-
-Graded by the `grade.py` in this commit. The P1 assertion is the revised one (see "P1, demoted
-after the run"): under the wording the run was given, P1 had to be a finding, no arm reported
-it as one, and the with-skill `full-review` scores 6/7 (substance 5/6).
-
-**On substance the gap is modest**: 15/15 against 10/15. The baselines found the forced-colors
-defect and the undersized icon button in every case where they were asked for, respected both
-overlays, and fell into none of the traps. The skill's clearest gains are the reduced-motion
-hover cue (A2), which every baseline missed, the spread-order defect reported with a line (R1),
-and a report in one consistent shape with a verdict line. The baselines respected the overlay
-as well as the skill did on this fixture, so the overlay handling is not a measured gain here.
+Earlier run, same day: one answer per case per arm on sonnet, graded by `grade.py` only after
+two grader fixes; 7/7, 6/6, 7/7 with the skill against 3/7, 5/6, 5/7 without. Superseded by
+the run above.
 
 ## What the baselines got wrong
 
-- **A2, missed by all three.** The `full-review` baseline wrote that reduced motion "is handled
-  correctly", and the `a11y-pass` baseline listed the Button's reduced-motion block under
-  "Verified OK". Both read the block that removes the hover transform as correct, without
-  noticing that the transform is the only hover cue. The French baseline did not raise it.
-- **R1.** The `full-review` baseline missed it: it noted only the reverse mismatch (a caller
-  passing `aria-invalid` alone gets no red border), with no spread and no line. The French
-  baseline did report the spread after `aria-invalid`, as a nit, citing `Input.tsx` without a
-  line number, so the assertion (which requires one) fails; read it as a near miss. The
-  `a11y-pass` baseline mentioned it in passing inside another finding; that case does not
-  assert R1.
-- **P1.** No arm reported it as a finding. The `full-review` baseline judged bundle size "not a
-  concern". All three with-skill runs left it on the Not checked line with a reason, judging
-  the cost negligible or unmeasurable without a build: the map lives in the only module that
-  uses it.
-- **Format.** No baseline ended with a `VERDICT:` line. The `a11y-pass` and French baselines
-  closed with a `## Not checked` / `## Non vérifié` section, which the grader credits; the
-  French one also used a `## Bloquant` heading on its own.
+- **`full-review`.** All three missed R1 (the spread after `aria-invalid` in `Input.tsx`), A2
+  (the reduced-motion hover cue in `Button.module.css`) and P1 (the variant map, neither
+  reported nor listed as not checked; two said bundle size was fine without measuring). None
+  ended on the verdict line.
+- **`a11y-pass`.** Every baseline missed A2: they called the reduced-motion block correct.
+- **`fr-pr-style`.** The 3/7 run wrote "Blocking" in English, had no Non vérifié, missed R1 and
+  did not end on the verdict. The two 6/7 runs only missed the final `VERDICT` line. The grader
+  passed their Non vérifié assertion on a closing French sentence listing what was not run, a
+  borderline call: with a strict labelled-section reading they drop to 5/7.
 
-## What the baselines found that the fixture did not plant
+## What the numbers mean
 
-The baselines were not weak reviewers. Real problems in the fixture that no assertion grades:
+- **Discriminating assertions**: A2 (missed by all 9 baselines where asked), R1 (missed by 4 of
+  6 baselines where asked), P1, and the format assertions (final `VERDICT` line, French section
+  names). **Non-discriminating**: the traps (Switch 24 px target, 44 px threshold, boolean
+  `invalid` prop, `useLayoutEffect`) and the legacy overlay's R1. Every run in both arms passed
+  them, so the overlay and trap handling show no gain.
+- **The baselines reported more real issues outside the planted list.** Graders verified 11 to
+  13 extra real findings per baseline full review against 6 to 9 with the skill (French: 11 to
+  12 against 8 to 10; a11y: 4 to 6 against 4 to 9). Examples: an empty package (no build,
+  `noEmit`), IconButton's `aria-label` overwriting the caller's, missing `:disabled` styles, a
+  test file that cannot run without a DOM environment. The skill trades breadth for the
+  planted, harder defects and a stable report format.
+- **No false finding with the skill.** No finding reported in any with-skill run was judged
+  false. Each baseline full review carried one over-confident claim (A2 or R1 "in good shape",
+  or bundle size "fine" without a build).
+- **Cost.** The skill adds about 89% wall time and 23% tokens per review: it runs the script
+  and verifies each finding. Some runs also rendered in a headless browser, a process claim the
+  graders could not verify.
+- **Bias that remains.** The skill's author also wrote the fixture and the assertions, so the
+  planted defects match the skill's rule set. `src/legacy/REVIEW.md` names the switched-off rule
+  by the skill's own id, and the root `REVIEW.md` states the 24 px floor for both arms. This
+  measures whether the skill does what it claims, not how it compares on arbitrary code.
+- **`grade.py` disagrees with the blind graders.** It fails one with-skill a11y run on "no
+  finding on the Switch target size" because a Switch hover / forced-colors finding cites
+  Switch lines near size words; the graders passed it (the finding is about hover and a
+  `flex-shrink` layout bug, not target size). It also fails two baselines on the Not checked
+  format where the graders accepted unlabelled prose. Known `grade.py` false positives, not
+  fixed in this change.
 
-- **No build, no types, no `dist`.** `main`, `exports` and `files` point into `dist/`, nothing
-  produces it, and there is no `types` entry: `npm publish` would ship an empty, untyped package.
-  The `full-review` baseline made it Blocking, the French one a Should fix. The with-skill
-  `full-review` (Blocking) and French run (Point d'attention) found it too.
-- **IconButton's accessible name overwritten.** `aria-label={label}` comes after `{...rest}`, so
-  a caller's `aria-label` is replaced by `undefined` when `label` is omitted. Two baselines and
-  all three with-skill runs reported the overwrite; the French baseline reported only that the
-  optional `label` allows an unnamed button.
-- **No disabled styling** on Button and Switch (IconButton too, in some answers). All three
-  baselines and all three with-skill runs reported it.
-- **No test environment.** `Switch.test.tsx` renders with Testing Library but no `jsdom` or
-  `happy-dom` is configured. The `full-review` and French baselines reported it; of the
-  with-skill runs, only `full-review` did.
-- Others, from one arm or both: the invalid border growing the input by 2 px, the Checkbox
-  dropping a caller's `ref`, hover lost in forced colors on IconButton and Switch, missing CSS
-  module type declarations, a stylelint class-name rule the gate would trip.
+## Triggering
 
-## Grader history
+Does the description make Claude load the skill on its own? Measured with `skill-creator`'s
+trigger eval (`scripts/run_eval.py`) on a 20-query set written for this skill:
 
-The grader was fixed twice before this run was graded, and its regexes were tuned after reading
-the six answers:
+- 10 should-trigger: front-end reviews of the author's own repositories, PRs, branches and
+  components, in French and English, on several stacks.
+- 10 near-miss should-not-trigger: reviewing an employer's repository against its own
+  conventions, backend Go reviews, writing a `REVIEW.md`, fixing a bug, writing a test, an
+  architecture audit, a Terraform review, a simplification, a WCAG question.
+- 3 runs per query, Claude Opus 5.5, the author's own Claude Code setup with its other review
+  skills installed, user hooks disabled.
+- `run_eval.py` does not run on Windows as shipped (it reads the subprocess pipe with
+  `select.select`); it ran from a patched copy (a reader thread instead of `select`, hooks
+  disabled). The patch is not part of this repository.
 
-1. The first version credited only the skill's vocabulary: rule ids, section names, `path:line`.
-   It was rewritten to credit the mechanism in plain English or French and to score format
-   apart (commit `5c016f7`).
-2. That version still graded the baselines 0/7, 0/6, 1/7 and the skill 7/7, 5/6, 7/7, and both
-   numbers were artefacts. It recognised only `path:12`, so a baseline citing `Checkbox.module.css`
-   "lines 17-25" or "lignes 17 à 25" earned nothing; it matched mentions inside Not checked
-   lines and "What is good" sections as findings, which credited the with-skill P1 from its Not
-   checked line; and its Switch trap failed on any line citing `Switch.module.css`, including an
-   evidence line and a legitimate forced-colors hover finding. This commit accepts every common
-   citation style, strips the Not checked and "What is good / Verified OK / Not reported"
-   regions before matching, fails the Switch trap only on a finding about the Switch's target
-   size, and groups lines into finding units (paragraph, list item, or heading with its
-   paragraph) instead of three-line windows.
-3. Tuned on the answers: A2 now also needs a word of loss (no, only, none, removed, nothing…),
-   because the baseline's "Reduced motion is handled correctly" line sits in a unit that cites
-   `Button.module.css` with hover and reduced motion; and the Not checked format assertion
-   accepts a section heading as well as a line, in the baselines' favour.
+| Variant | Should trigger | Should not trigger | Query-level recall |
+|---|---|---|---|
+| As installed | 2/30 runs | 0/30 runs | 0/10 |
+| Registered as a project skill, load counted at any point | 4/30 runs | 0/30 runs | 0/10 |
 
-Re-checked on the hand-written samples: the ideal answer scores full marks; three empty answers
-score 0 on every assertion; a plain-words answer with no rule ids, no `VERDICT` and no skill
-labels scores full substance and 0 on format; an answer planting a switched-off R1, a 44 px
-Switch finding and dependency-array advice fails exactly those assertions.
+No query reached the 50% trigger rate, and there was no false positive. A diagnostic showed the
+skill listed in every session; the model mostly started reviewing directly with Bash and Glob.
 
-## Remaining biases
+**The skill under-triggers badly**: in practice it must be invoked explicitly (`/front-review`
+or by name).
 
-- `src/legacy/REVIEW.md` names the switched-off rule by the skill's own id, "R1". The skill maps
-  it mechanically; a baseline has to read "legacy fields keep their prop order" (all three did).
-- The root `REVIEW.md` states the 24 px floor and makes a state lost in forced colors Blocking,
-  and both arms read it. A1, A3 and the Switch trap therefore test reading the overlay as much
-  as anything the skill brings, which narrows the measurable gap.
-- The fixture and the grader were written by the skill's author, with plants that match the
-  skill's rule ids, and the grader was tuned after reading the answers (above).
-- One run per prompt and arm: no variance is measured.
+`skill-creator`'s description optimizer (`scripts/run_loop.py`, same patched copy, Opus 5.5
+proposing the rewrites) then ran 5 iterations on a 12-query train split, checked against the 8
+held-out queries, 3 runs per query. No rewrite beat the original: every iteration scored 6/12 on
+train and 4/8 on test, passing every should-not-trigger query and no should-trigger one. Rewrites
+that led with the user's phrasings, the target repositories and the competing review skills
+reached 3/30 should-trigger runs at most, noise at this sample size. The description is kept as
+is: for every description tried, the model reviewed the code directly instead of loading a skill.
 
-## P1, demoted after the run
+## Not done
 
-All three with-skill runs left the script's P1 candidate on the Not checked line, judging its
-consumer cost negligible or unmeasurable without a build. That is a fair call, and it contradicted the skill's rule
-that a script candidate is never dropped. After the run, P1 became a **hint**: the script now
-prints it under `## Hints`, not `## Candidates`, and `SKILL.md` and `reference.md` say to report
-it or name it on the Not checked line with a reason. A1 and R1 stay mandatory candidates. The
-P1 assertion changed to match: "P1 is either reported as a finding or listed in Not checked
-with a reason".
-
-**This change came after the run.** The run measured the previous wording: the with-skill
-agents saw P1 under `## Candidates (3)` with "never drop it". The assertion counts did not
-change.
+- Human review of the outputs in the eval viewer: generated and handed to the author, no
+  feedback yet.
+- Runs on Linux or macOS.
 
 ## Runs not completed
 
-None. All six answers were produced and graded.
+None. All 18 benchmark answers were produced and graded, and all 60 trigger runs of each
+variant completed.
 
 ## Reproducing
 
@@ -173,4 +161,5 @@ bash skills/front-review/scripts/front-review.sh skills/front-review/evals/fixtu
 
 Graded answers go in a run directory as `full-review.md`, `a11y-pass.md` and `fr-pr-style.md`,
 then `python3 skills/front-review/evals/grade.py <run-dir>`; exit code 0 means every assertion
-passed. On Windows, set `PYTHONUTF8=1`.
+passed. On Windows, set `PYTHONUTF8=1`. The blind grading and the aggregate come from
+`skill-creator`'s benchmark flow over the same three evals.
