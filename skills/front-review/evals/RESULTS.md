@@ -14,6 +14,15 @@ without, and both answers are graded by `grade.py`: pure regex over the answer t
 the loop. Baselines get a neutral copy of the fixture, so the overlay files stay but nothing
 names the plants.
 
+The grader scores substance and format apart, because an agent without the skill cannot know its
+vocabulary. **Substance**: a finding counts when up to 3 consecutive lines cite the file with a
+line number and either the rule id or the mechanism in plain English or French (forced colors,
+the spread after `aria-invalid`, reduced motion with hover, target size, tree-shaking or bundle);
+an absence assertion passes on any non-empty answer that cites a `file:line`. **Format**: the
+last `VERDICT: CHANGES` line, the Not checked / Non vérifié line, the French section names. Each
+case prints `substance x/y  format x/y  total x/y`; the scores table, once run, reports the
+total, and the with/without gap is read on substance first.
+
 ## What the fixture plants
 
 Defects that must be reported, each as `path:line` with its rule id:
@@ -42,10 +51,12 @@ Must not be reported:
   `R1 src/legacy/OldField.tsx:8` under "Suppressed by the overlay". A2 and A3 are left to the
   agent's judgement on purpose: no regex tells a removed hover cue or an unnamed small target
   from a correct one.
-- `grade.py` on a hand-written ideal answer scores 7/7, 6/6 and 7/7; on three empty answers it
-  scores 0 on every case (the absence assertions require a `VERDICT:` line, so silence cannot
-  pass them); on an answer that reports the switched-off R1, a 44 px Switch finding and
-  dependency-array advice, exactly those assertions fail.
+- `grade.py` on a hand-written ideal answer scores full substance and format (6/6 + 1/1,
+  5/5 + 1/1, 4/4 + 3/3); on three empty answers it scores 0 on every case (an absence assertion
+  needs at least one `file:line` citation, so silence cannot pass it); on a plain-words answer
+  that names each defect with `file:line` but no rule id, no `VERDICT` and no skill label, it
+  scores full substance and format 0/1, 0/1, 0/3; on an answer that reports the switched-off R1,
+  a 44 px Switch finding and dependency-array advice, exactly those assertions fail.
 
 ## Reproducing the script half
 
