@@ -62,12 +62,14 @@ TSX/JSX -> R, A, T (6)
 - P axis: on for package.json (publishable: exports or main, not private)
 - R11: off (the ESLint config carries react-hooks)
 
-## Candidates (3): raise each one, or keep it under Not checked; never drop it
+## Candidates (2): raise each one, or keep it under Not checked; never drop it
 - A1 src/Checkbox.module.css:8 appearance: none and no forced-colors media query in the file
-- P1 src/Button.tsx:4 sizeClass maps keys to styles.* and is only read by index
 - R1 src/Input.tsx:14 {...rest} after aria-invalid (line 13)
 Suppressed by the overlay (1)
 - R1 src/legacy/OldField.tsx:8 {...props} after aria-describedby (line 8) · off in src/legacy/REVIEW.md
+
+## Hints (1): report each one, or name it under Not checked with a reason
+- P1 src/Button.tsx:4 sizeClass maps keys to styles.* and is only read by index
 
 ## Vocabulary (en)
 Sections, in order: Blocking | Should fix | Minor (5 at most) | Pre-existing | Outside diff
@@ -101,6 +103,13 @@ the default floor and the report template: [reference.md](reference.md).
 Three prompts review a committed fixture (`evals/fixtures/sample-ui-lib/`) that plants five
 defects, one defect its overlay switches off, and three traps a keyword-matching reviewer
 reports. The grader credits a finding by its `file:line` and mechanism, not by the skill's rule
-ids, and scores substance and format apart, so a baseline is not failed on vocabulary. The
-with/without run is not done yet; the grader is checked against an ideal, a plain-words, a noisy
-and an empty answer. Details: [`evals/RESULTS.md`](evals/RESULTS.md).
+ids, and scores substance and format apart, so a baseline is not failed on vocabulary.
+
+Run on 2026-10-31, sonnet for both arms: with the skill 7/7, 6/6, 7/7 (substance 6/6, 5/5,
+4/4); without 3/7, 5/6, 5/7 (substance 3/6, 4/5, 3/4). The gap on substance is modest: the
+baselines found the forced-colors and target-size defects too, and some real problems the
+fixture did not plant. What the skill added is the reduced-motion hover cue (missed by every
+baseline), the spread-order defect with a line, and a consistent report shape; the baselines
+respected the overlay as well as the skill did. The P1 check was demoted to a hint after the
+run. Details:
+[`evals/RESULTS.md`](evals/RESULTS.md).

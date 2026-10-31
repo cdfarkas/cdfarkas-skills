@@ -16,7 +16,7 @@ The fixture under evals/fixtures/sample-ui-lib/ plants, by construction:
   - R1  src/Input.tsx             {...rest} after aria-invalid, so a caller's aria-invalid wins over `invalid`
   - A2  src/Button.module.css     the only hover cue is a transform, removed under reduced motion
   - A3  src/IconButton.*          an 18 px target whose accessible name is optional
-  - P1  src/Button.tsx            a module-level variant -> CSS-module class map, in a publishable package
+  - P1  src/Button.tsx            a module-level variant -> CSS-module class map (a hint: finding or Not checked)
   - R1  src/legacy/OldField.tsx   switched off by src/legacy/REVIEW.md: must NOT be reported
 and three traps that must NOT be reported:
   - X1  the `invalid` boolean of Input mirrors one ARIA state
@@ -25,12 +25,21 @@ and three traps that must NOT be reported:
 
 Grading credits substance, not the skill's vocabulary, so an agent without the skill is not
 failed on format:
-  - a finding counts when a window of up to 3 consecutive non-empty lines cites the file with
-    a line number AND either the rule id or the mechanism, in English or French
-  - an absence assertion passes on any review: a non-empty answer citing at least one
-    file:line, so an empty answer scores 0
-  - format assertions (the last VERDICT line, the Not checked line, the French section names)
-    are scored separately, so the gap on substance can be read on its own
+  - a citation is a file with a line in any common style: `path:12`, `path:12-25`, or the file
+    followed by "line 12", "lines 17-25", "lignes 17 à 25", "(ligne 8)"; backticked or not,
+    relative or absolute, with forward or back slashes
+  - a finding counts when one finding unit cites the file AND carries either the rule id or the
+    mechanism, in English or French; a unit is a paragraph, a list item, or a heading together
+    with the paragraph under it
+  - Not checked / Non vérifié lines and sections, and sections titled like What is good,
+    Verified OK, Ce qui est bon, Not reported, Non reporté, are stripped before findings and
+    absences are matched: a mention there is not a finding
+  - P1 is a hint, not a mandatory candidate: it passes as a finding, or as a Not checked
+    mention with a reason
+  - an absence assertion passes on any review: a non-empty answer with at least one citation,
+    so an empty answer scores 0
+  - format assertions (the last VERDICT line, the Not checked line or section, the French
+    section names) are scored separately, so the gap on substance can be read on its own
 
 Usage:
     grade.py <run-dir>
@@ -48,12 +57,15 @@ from pathlib import Path
 
 SUBSTANCE, FORMAT = "substance", "format"
 
-LOC = re.compile(r"[\w./-]+\.(?:tsx|ts|jsx|js|css|json|md):\d+")
-OLDFIELD = re.compile(r"OldField\.tsx:\d+")
-SWITCH = re.compile(r"Switch\.(?:tsx|module\.css):\d+")
+TAIL = r"(?::\d+|`?[\s,;:(]*(?:lines?|lignes?)\s+\d+)"
+LOC = re.compile(r"[\w.\\/-]+\.(?:tsx|ts|jsx|js|css|json|md)" + TAIL, re.I)
+OLDFIELD = re.compile(r"OldField\.tsx" + TAIL, re.I)
+SWITCH = re.compile(r"(?:^|[\\/`])Switch\.(?:tsx|module\.css)", re.I)
+TARGET = re.compile(r"size|taille|\b24\b|\b44\b|target|cible", re.I)
 PX44 = re.compile(r"\b44\s*(?:px|css|×|x\b|by)", re.I)
 BOOLEAN = re.compile(r"\bR5\b|boolean prop|mode boolean|props? bool[ée]enne", re.I)
 MEMO = re.compile(r"\bR7\b|dependency array|deps array|tableau de d[ée]pendances|useCallback|useMemo|React\.memo|\bmemoi[sz]", re.I)
+REASON = re.compile(r"because|since|\bno\b|\bnot\b|without|cannot|unmeasured|\bcar\b|parce|faute|\bsans\b|aucun|\bpas\b|impossible", re.I)
 
 CHECKBOX_CSS = r"Checkbox\.module\.css"
 INPUT_TSX = r"(?<!Old)Input\.tsx"
@@ -61,7 +73,13 @@ BUTTON_CSS = r"(?<!Icon)Button\.module\.css"
 ICONBUTTON = r"IconButton\.(?:tsx|module\.css)"
 BUTTON_TSX = r"(?<!Icon)Button\.tsx"
 
-# Matched against one window joined into a single line; (?=…)(?=…) means both terms, in any order.
+NOT_CHECKED = re.compile(r"^\**(?:Not checked|Non v[ée]rifi[ée])\**\s*:", re.I)
+OUT_OF_SCOPE = re.compile(
+    r"^(#+)\s*\**(?:(Not checked|Non v[ée]rifi[ée])|What is good|Verified OK|Ce qui est bon|Not reported|Non report[ée])", re.I)
+HEADING = re.compile(r"^(#+)\s")
+ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s")
+
+# Matched against one finding unit joined into a single line; (?=…)(?=…) means every term, in any order.
 MECHANISM = {
     "A1": re.compile(r"forced[- ]colou?rs|high[- ]contrast|contrastes? [ée]lev[ée]s?|couleurs forc[ée]es", re.I),
     "R1": re.compile(
@@ -69,7 +87,9 @@ MECHANISM = {
         r"(?=.*(?:aria-invalid|after|last|order|overrid|wins|apr[èe]s|ordre|[ée]cras|l'emporte))"
         r"|(?=.*aria-invalid)(?=.*(?:overrid|wins|clobber|[ée]cras|l'emporte|prend le dessus))", re.I),
     "A2": re.compile(
-        r"(?=.*(?:reduced[- ]motion|mouvements? r[ée]duits?|r[ée]duction des mouvements))(?=.*(?:hover|survol))", re.I),
+        r"(?=.*(?:reduced[- ]motion|mouvements? r[ée]duits?|r[ée]duction des mouvements))(?=.*(?:hover|survol))"
+        r"(?=.*(?:\bno\b|nothing|none|only|lost|loses?\b|remov|without|disappear|\baucun|\brien\b|\bsans\b|\bseul|perd|dispara))",
+        re.I),
     "A3": re.compile(
         r"target[- ]size|touch target|hit (?:area|target)|taille (?:de |des )?cibles?|cible tactile"
         r"|\b24\s*(?:css\s*)?(?:px|×|x\b)|2\.5\.8", re.I),
@@ -81,13 +101,66 @@ def nonempty(text: str) -> list[str]:
     return [line.strip() for line in text.splitlines() if line.strip()]
 
 
+def split_scope(text: str) -> tuple[str, str]:
+    """Return (the text findings are matched in, the Not checked text)."""
+    kept, unchecked = [], []
+    skip, skip_level, note_section, in_note = False, 0, False, False
+    for line in text.splitlines():
+        s = line.strip()
+        head = HEADING.match(s)
+        if head and skip and len(head.group(1)) <= skip_level:
+            skip = False
+        if head or not s:
+            in_note = False
+        out = OUT_OF_SCOPE.match(s)
+        if out:
+            skip, skip_level, note_section = True, len(out.group(1)), bool(out.group(2))
+            continue
+        if NOT_CHECKED.match(s):
+            in_note = True
+        if in_note or (skip and note_section):
+            unchecked.append(line)
+        elif not skip:
+            kept.append(line)
+    return "\n".join(kept), "\n".join(unchecked)
+
+
+def units(text: str) -> list[str]:
+    out, cur, bare_heading = [], [], False
+    for line in text.splitlines():
+        s = line.strip()
+        if not s:
+            if cur and not bare_heading:
+                out.append(" ".join(cur))
+                cur = []
+            continue
+        if HEADING.match(s) or ITEM.match(s):
+            if cur:
+                out.append(" ".join(cur))
+            cur, bare_heading = [s], bool(HEADING.match(s))
+            continue
+        cur.append(s)
+        bare_heading = False
+    if cur:
+        out.append(" ".join(cur))
+    return out
+
+
 def finding(text: str, path: str, rule: str) -> tuple[bool, str]:
-    loc = re.compile(path + r":\d+")
-    rid = re.compile(rf"\b{rule}\b")
-    lines = nonempty(text)
-    windows = (" ".join(lines[i:i + 3]) for i in range(len(lines)))
-    hit = next((w for w in windows if loc.search(w) and (rid.search(w) or MECHANISM[rule].search(w))), None)
+    loc, rid = re.compile(path + TAIL, re.I), re.compile(rf"\b{rule}\b")
+    hit = next((u for u in units(split_scope(text)[0])
+                if loc.search(u) and (rid.search(u) or MECHANISM[rule].search(u))), None)
     return hit is not None, hit or "missing"
+
+
+def p1_hint(text: str) -> tuple[bool, str]:
+    ok, evidence = finding(text, BUTTON_TSX, "P1")
+    if ok:
+        return ok, evidence
+    loc = re.compile(BUTTON_TSX + TAIL, re.I)
+    note = next((u for u in units(split_scope(text)[1])
+                 if (re.search(r"\bP1\b|sizeClass", u) or loc.search(u)) and REASON.search(u)), None)
+    return note is not None, note or "neither a finding nor a Not checked mention with a reason"
 
 
 def is_review(text: str) -> bool:
@@ -97,8 +170,19 @@ def is_review(text: str) -> bool:
 def absent(text: str, pattern: re.Pattern) -> tuple[bool, str]:
     if not is_review(text):
         return False, "no file:line citation: not a review"
-    hit = next((l for l in nonempty(text) if pattern.search(l)), None)
+    hit = next((l for l in nonempty(split_scope(text)[0]) if pattern.search(l)), None)
     return hit is None, hit or "absent"
+
+
+def no_switch_target(text: str) -> tuple[bool, str]:
+    """Fails only on a unit whose first citation is the Switch and that talks about its size."""
+    if not is_review(text):
+        return False, "no file:line citation: not a review"
+    for u in units(split_scope(text)[0]):
+        first = LOC.search(u)
+        if first and SWITCH.search(first.group(0)) and TARGET.search(u):
+            return False, u
+    return True, "absent"
 
 
 def last_is_changes(text: str) -> tuple[bool, str]:
@@ -108,7 +192,7 @@ def last_is_changes(text: str) -> tuple[bool, str]:
 
 
 def line_starting(text: str, label: str) -> tuple[bool, str]:
-    hit = next((l for l in nonempty(text) if re.match(rf"^\**{label}\**\s*:", l)), None)
+    hit = next((l for l in nonempty(text) if re.match(rf"^(?:#+\s*)?\**{label}\**\s*(?::|$)", l, re.I)), None)
     return hit is not None, hit or "missing"
 
 
@@ -131,7 +215,7 @@ def grade_full_review(text: str, ctx: dict) -> list[tuple[str, bool, str, str]]:
         (SUBSTANCE, "R1 (spread after aria-invalid) reported on src/Input.tsx:line", finding, INPUT_TSX, "R1"),
         (SUBSTANCE, "A2 (reduced-motion hover cue) reported on src/Button.module.css:line", finding, BUTTON_CSS, "A2"),
         (SUBSTANCE, "A3 (target size) reported on src/IconButton:line", finding, ICONBUTTON, "A3"),
-        (SUBSTANCE, "P1 (variant map vs tree-shaking) reported on src/Button.tsx:line", finding, BUTTON_TSX, "P1"),
+        (SUBSTANCE, "P1 (variant map hint) reported on src/Button.tsx:line, or in Not checked with a reason", p1_hint),
         (SUBSTANCE, "the overlay-disabled R1 in OldField.tsx is not reported", absent, OLDFIELD),
         (FORMAT, "the last non-empty line is VERDICT: CHANGES", last_is_changes),
     ], text)
@@ -142,16 +226,16 @@ def grade_a11y_pass(text: str, ctx: dict) -> list[tuple[str, bool, str, str]]:
         (SUBSTANCE, "A1 (forced colors) reported on src/Checkbox.module.css:line", finding, CHECKBOX_CSS, "A1"),
         (SUBSTANCE, "A2 (reduced-motion hover cue) reported on src/Button.module.css:line", finding, BUTTON_CSS, "A2"),
         (SUBSTANCE, "A3 (target size) reported on src/IconButton:line", finding, ICONBUTTON, "A3"),
-        (SUBSTANCE, "no finding cites src/Switch (24 px meets the floor)", absent, SWITCH),
+        (SUBSTANCE, "no finding on the Switch target size (24 px meets the floor)", no_switch_target),
         (SUBSTANCE, "no 44 px threshold is applied", absent, PX44),
-        (FORMAT, "a Not checked line is present", line_starting, "Not checked"),
+        (FORMAT, "a Not checked line or section is present", line_starting, "Not checked"),
     ], text)
 
 
 def grade_fr_pr_style(text: str, ctx: dict) -> list[tuple[str, bool, str, str]]:
     return grade([
         (FORMAT, "the French section names are used (a Bloquant heading)", bloquant),
-        (FORMAT, "a Non vérifié line is present", line_starting, "Non vérifié"),
+        (FORMAT, "a Non vérifié line or section is present", line_starting, "Non v[ée]rifi[ée]"),
         (SUBSTANCE, "R1 (spread after aria-invalid) reported on src/Input.tsx:line", finding, INPUT_TSX, "R1"),
         (SUBSTANCE, "the boolean invalid prop is not reported (X1)", absent, BOOLEAN),
         (SUBSTANCE, "the dependency-less useLayoutEffect is not reported (X7)", absent, MEMO),

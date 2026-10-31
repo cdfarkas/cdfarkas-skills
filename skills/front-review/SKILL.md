@@ -70,6 +70,8 @@ The output has fixed sections, described in [reference.md](reference.md), "Scrip
 - **Candidates**: mechanical findings with `file:line`. Each one enters the review: verify it,
   you may raise its severity, never drop it. One you cannot confirm goes on the Not checked line
   with the reason. Ignore the "Suppressed by the overlay" list.
+- **Hints**: mechanical leads whose cost depends on judgement (P1). Report one as a finding, or
+  name it on the Not checked line with the reason you did not.
 - **Vocabulary**: the exact section names and closing lines of the report, in its language.
 
 ## Step 3: find

@@ -3,8 +3,8 @@
 # front-review: resolve one review target and print a deterministic review context for a
 # front-end code review: the changed front files grouped by rule axis, the repo's REVIEW.md
 # overlay read from the base ref, contract files, gates detected from config files, the floor
-# in effect, candidate findings with file:line that the review must carry, and the severity
-# vocabulary of the report language.
+# in effect, candidate findings with file:line that the review must carry, hints it weighs,
+# and the severity vocabulary of the report language.
 #
 # Read-only: it never writes to the working tree, never checks out, never calls a GitHub
 # write endpoint. A pull request target fetches the PR head into the object store only.
@@ -372,10 +372,11 @@ $(_files tsx; _files ts; _files build; _files css)
 EOF
 sort -u -o "$_TMP/pkgaxis" "$_TMP/pkgaxis"
 
-: > "$_TMP/raise"; : > "$_TMP/supp"
+: > "$_TMP/raise"; : > "$_TMP/supp"; : > "$_TMP/hints"
 sort -t "$TAB" -k1,1 -k2,2 -k3,3n "$_TMP/cands" | while IFS="$TAB" read -r id f ln msg; do
   by="$(_off_by "$f" "$id")"
   if [ -n "$by" ]; then printf -- '- %s %s:%s %s · off in %s\n' "$id" "$f" "$ln" "$msg" "$by" >> "$_TMP/supp"
+  elif [ "$id" = P1 ]; then printf -- '- %s %s:%s %s\n' "$id" "$f" "$ln" "$msg" >> "$_TMP/hints"
   else printf -- '- %s %s:%s %s\n' "$id" "$f" "$ln" "$msg" >> "$_TMP/raise"; fi
 done
 
@@ -482,6 +483,9 @@ printf '\n## Candidates (%s): raise each one, or keep it under Not checked; neve
 _list "$_TMP/raise"
 printf 'Suppressed by the overlay (%s)\n' "$(_count "$_TMP/supp")"
 _list "$_TMP/supp"
+
+printf '\n## Hints (%s): report each one, or name it under Not checked with a reason\n' "$(_count "$_TMP/hints")"
+_list "$_TMP/hints"
 
 printf '\n## Vocabulary (%s)\n' "$_LANG"
 if [ "$_LANG" = fr ]; then
