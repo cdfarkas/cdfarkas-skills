@@ -1,0 +1,50 @@
+{
+  "skill_name": "front-review",
+  "notes": "Self-contained: every case reviews the committed fixture evals/fixtures/sample-ui-lib, a tiny publishable React component library with a REVIEW.md overlay and nothing installed, so no render can run. The fixture plants five defects (A1 forced colors, R1 spread order, A2 reduced-motion hover cue, A3 an 18 px unlabeled target, P1 a variant-to-class map), one R1 defect in src/legacy/ that src/legacy/REVIEW.md switches off, and three traps that must not be reported (X1 a boolean prop mirroring aria-invalid, X7 a dependency-less useLayoutEffect, X4 a 24 px switch a 44 px rule would flag). A finding counts when one line names the file with a line number and the rule id, as the finding shape requires.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "full-review",
+      "prompt": "I'm about to publish skills/front-review/evals/fixtures/sample-ui-lib as an npm package. Can you review the components first? Accessibility, React code, bundle size, the lot.",
+      "expected_output": "A fix list in the report template: the five planted defects with file:line and rule id, nothing from src/legacy/OldField.tsx, and VERDICT: CHANGES on the last line.",
+      "assertions": [
+        "A1 is reported on src/Checkbox.module.css with a line number",
+        "R1 is reported on src/Input.tsx with a line number",
+        "A2 is reported on src/Button.module.css with a line number",
+        "A3 is reported on src/IconButton (tsx or module.css) with a line number",
+        "P1 is reported on src/Button.tsx with a line number",
+        "The R1 defect switched off by src/legacy/REVIEW.md is not reported (no OldField.tsx:line citation)",
+        "The last non-empty line is VERDICT: CHANGES"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "a11y-pass",
+      "prompt": "Do an accessibility pass on skills/front-review/evals/fixtures/sample-ui-lib: forced colors, reduced motion, target sizes, all of it.",
+      "expected_output": "The three accessibility defects with file:line and rule id, no finding on the 24 px Switch, no 44 px threshold, and a Not checked line naming the render probes that could not run.",
+      "assertions": [
+        "A1 is reported on src/Checkbox.module.css with a line number",
+        "A2 is reported on src/Button.module.css with a line number",
+        "A3 is reported on src/IconButton (tsx or module.css) with a line number",
+        "No finding cites src/Switch (the 24 px target meets the floor)",
+        "No 44 px threshold is applied",
+        "A Not checked line lists what could not be verified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "fr-pr-style",
+      "prompt": "Fais-moi une revue du code front dans skills/front-review/evals/fixtures/sample-ui-lib, comme pour une PR : qu'est-ce qui bloque ?",
+      "expected_output": "The report in French with the fr vocabulary (Bloquant, Non vérifié), the R1 finding on Input.tsx, none of the X1/X7 traps, nothing from src/legacy/OldField.tsx, and VERDICT: CHANGES.",
+      "assertions": [
+        "The report uses the French section names (a Bloquant heading)",
+        "A Non vérifié line lists what could not be verified",
+        "R1 is reported on src/Input.tsx with a line number",
+        "The boolean invalid prop is not reported (no R5, no boolean-prop finding)",
+        "The dependency-less useLayoutEffect is not reported (no R7, no dependency array or memoization advice)",
+        "The R1 defect switched off by src/legacy/REVIEW.md is not reported (no OldField.tsx:line citation)",
+        "The last non-empty line is VERDICT: CHANGES"
+      ]
+    }
+  ]
+}

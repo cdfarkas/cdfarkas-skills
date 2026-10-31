@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.5.0"
+    "version": "0.6.0"
   },
   "plugins": [
     {
@@ -46,6 +46,15 @@
       "skills": ["./skills/dead-code-audit"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/dead-code-audit"
+    },
+    {
+      "name": "front-review",
+      "description": "Review a front-end change (React, TypeScript, CSS, any stack) against a base rule set plus the repo's own REVIEW.md overlay read from the base branch: changed files by rule axis, gates and floor detected, mechanical candidates with file:line that cannot be dropped, every finding verified, a fix list with a PASS / CHANGES verdict. Read-only.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/front-review"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/front-review"
     }
   ]
 }

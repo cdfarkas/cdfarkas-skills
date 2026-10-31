@@ -23,6 +23,7 @@ evaluation is published as it happened, including the runs that failed or did no
 | [`sentry-triage`](skills/sentry-triage/) | The unresolved issues of a Sentry project ranked by impact, then what to fix first by severity and complexity | Sentry token, `curl`, `jq` |
 | [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run`; checks its prerequisites and proposes the fix for what is missing | `gh`, `jq`, `git`, `timeout` |
 | [`dead-code-audit`](skills/dead-code-audit/) | Dead code in a JS/TS repo, found with Knip zero-install — unused files, exports, types and dependencies, categorized and flagged for likely false positives, with a before/after removable-LOC score | `node`, `jq` |
+| [`front-review`](skills/front-review/) | A front-end code review for any React/TS/CSS stack, tuned per repo by a `REVIEW.md` overlay read from the base branch: mechanical candidates that cannot be dropped, judgement rules on top, every finding verified, a fix list with a verdict | `git`; `gh` for a PR |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -34,6 +35,7 @@ Each folder has its own README with usage, output and evaluation results.
 | `sentry-triage` | 8/8, 4/4, 3/3 | 2/8, 2/4, 1/3 | 129 s and 85k with, 334 s and 117k without | [RESULTS.md](skills/sentry-triage/evals/RESULTS.md) |
 | `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
 | `dead-code-audit` | 7/7, 4/4, 4/4 | 0/7, 0/4, 0/4 | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
+| `front-review` | not measured yet | not measured yet | not measured yet | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
 sessions. `not measured` means the run aborted (an API rate limit, in the `pr-todo`
@@ -61,6 +63,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin install sentry-triage@cdfarkas-skills
 /plugin install pr-guardian@cdfarkas-skills
 /plugin install dead-code-audit@cdfarkas-skills
+/plugin install front-review@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
