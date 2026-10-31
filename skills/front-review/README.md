@@ -100,5 +100,7 @@ the default floor and the report template: [reference.md](reference.md).
 
 Three prompts review a committed fixture (`evals/fixtures/sample-ui-lib/`) that plants five
 defects, one defect its overlay switches off, and three traps a keyword-matching reviewer
-reports. The with/without run is not done yet; the grader is checked against an ideal and an
-empty answer. Details: [`evals/RESULTS.md`](evals/RESULTS.md).
+reports. The grader credits a finding by its `file:line` and mechanism, not by the skill's rule
+ids, and scores substance and format apart, so a baseline is not failed on vocabulary. The
+with/without run is not done yet; the grader is checked against an ideal, a plain-words, a noisy
+and an empty answer. Details: [`evals/RESULTS.md`](evals/RESULTS.md).
