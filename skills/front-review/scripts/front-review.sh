@@ -2,9 +2,10 @@
 #
 # front-review: resolve one review target and print a deterministic review context for a
 # front-end code review: the changed front files grouped by rule axis, the repo's REVIEW.md
-# overlay read from the base ref, contract files, gates detected from config files, the floor
-# in effect, candidate findings with file:line that the review must carry, hints it weighs,
-# and the severity vocabulary of the report language.
+# overlay read from the base ref, contract files, gates detected from config files, the
+# official library skills that apply and whether they are installed, the floor in effect,
+# candidate findings with file:line that the review must carry, hints it weighs, and the
+# severity vocabulary of the report language.
 #
 # Read-only: it never writes to the working tree, never checks out, never calls a GitHub
 # write endpoint. A pull request target fetches the PR head into the object store only.
@@ -463,6 +464,74 @@ while IFS="$TAB" read -r d p i; do
   printf -- '- off%s: %s (%s)\n' "$scope" "$(_words "$_TMP/ov.$i.off")" "$p"
 done < "$_TMP/ov.list"
 
+_ROOT="${_UP:-.}"
+for f in "$_ROOT"/.claude/skills/*/SKILL.md "$_ROOT"/.agents/skills/*/SKILL.md "${HOME:-}"/.claude/skills/*/SKILL.md \
+  "${HOME:-}"/.agents/skills/*/SKILL.md "${HOME:-}"/.claude/plugins/cache/*/*/*/skills/*/SKILL.md; do
+  if [ -f "$f" ]; then echo "$f"; fi
+done > "$_TMP/skills.files"
+awk '{ fm = 0
+  while ((getline l < $0) > 0) {
+    if (l ~ /^---/) { if (++fm > 1) break; continue }
+    if (fm == 1 && l ~ /^name:/) { sub(/^name:[ \t]*/, "", l); gsub(/["\047\r \t]/, "", l); print l; break }
+  }
+  close($0) }' "$_TMP/skills.files" | sort -u > "$_TMP/skills.installed"
+
+: > "$_TMP/lib"; : > "$_TMP/libmiss"; : > "$_TMP/libnote"
+_lib() {
+  if grep -qxF "$1" "$_TMP/skills.installed"; then printf -- '- %s · %s · axes %s · installed\n' "$1" "$2" "$3" >> "$_TMP/lib"
+  else
+    printf -- '- %s · %s · axes %s · missing · install: %s\n' "$1" "$2" "$3" "$4" >> "$_TMP/lib"
+    printf '%s (%s)\n' "$1" "$3" >> "$_TMP/libmiss"
+  fi
+}
+_dep() { grep -qE "\"($1)\"[[:space:]]*:" "$_TMP/pkgs.txt"; }
+_VSA="npx skills add vercel-labs/agent-skills --skill"
+if _dep react; then
+  if _dep next; then n=on; else n=off; fi
+  _lib vercel-react-best-practices "dependency react; Next.js-only rules (server-, async-, most bundle-): $n" "R, P" "$_VSA vercel-react-best-practices -a claude-code -y"
+  _lib vercel-composition-patterns "dependency react" "R" "$_VSA vercel-composition-patterns -a claude-code -y"
+fi
+if grep -qE "^(css|tsx|test)$TAB" "$_TMP/front"; then
+  _lib web-design-guidelines "CSS, TSX/JSX or story files in scope" "A, U" "$_VSA web-design-guidelines -a claude-code -y"
+fi
+t="$(grep -E '(^|/)tsconfig[^/]*\.json$' "$_TMP/changed" | head -n 1 || true)"
+[ -z "$t" ] || _lib typescript-project-setup "$t changed" "R" "/plugin marketplace add microsoft/typescript-skills, then /plugin install typescript@typescript-skills"
+c=""
+for p in $(_gate pkg); do _dirv "$p"; _joinv "$_D" components.json; if _has "$_H" "$_J"; then c="$_J"; break; fi; done
+if [ -n "$c" ] || _dep shadcn; then _lib shadcn "${c:-dependency shadcn}" "U, R" "npx skills add shadcn/ui --skill shadcn -a claude-code -y"; fi
+d="$(_deps 'react-aria|react-aria-components')"
+[ -z "$d" ] || _lib react-aria "dependency $d" "A, R" "npx skills add https://react-aria.adobe.com -a claude-code -y"
+if _dep svelte; then _lib svelte-core-bestpractices "dependency svelte" "R" "see https://svelte.dev/docs/ai/skills"; fi
+d="$(_deps '@tanstack/[a-z0-9-]+')"
+if [ -n "$d" ]; then
+  nm=""
+  for p in $(_gate pkg); do
+    _dirv "$p"
+    [ ! -d "$_D/node_modules/@tanstack" ] || nm=1
+    for s in "$_D"/node_modules/@tanstack/*/skills; do if [ -d "$s" ]; then echo "$s"; fi; done
+  done > "$_TMP/tsk"
+  if [ -s "$_TMP/tsk" ]; then
+    printf -- '- tanstack · dependency %s · axes R · installed: read the SKILL.md files under %s\n' "$d" "$(_words "$_TMP/tsk")" >> "$_TMP/lib"
+  elif [ -z "$nm" ]; then
+    printf -- '- tanstack · dependency %s · axes R · missing · install: the project dependencies (the skills ship inside the packages; npx @tanstack/intent@latest list shows them)\n' "$d" >> "$_TMP/lib"
+    echo "tanstack (R)" >> "$_TMP/libmiss"
+  else echo "- tanstack: the installed $d ship no skills" >> "$_TMP/libnote"; fi
+fi
+if _dep next; then
+  nd=""
+  for p in $(_gate pkg); do _dirv "$p"; if [ -d "$_D/node_modules/next/dist/docs" ]; then nd="$_D/node_modules/next/dist/docs"; break; fi; done
+  if [ -n "$nd" ]; then echo "- next: no review skill; read the docs at $nd" >> "$_TMP/libnote"
+  else echo "- next: no review skill; its docs ship in node_modules/next/dist/docs from 16.3, not installed here" >> "$_TMP/libnote"; fi
+fi
+n="$(_deps 'tailwindcss|vite|vitest|@testing-library/[a-z-]+|storybook|@storybook/[a-z0-9-]+|@playwright/test|eslint|typescript-eslint|@radix-ui/[a-z-]+|vue|astro' \
+  | tr ' ' '\n' | sed -E 's#^@(testing-library|storybook|radix-ui)/.*#@\1/*#' | sort -u | tr '\n' ' ' | sed 's/^ *//; s/ *$//')"
+[ -z "$n" ] || echo "- no official review skill, do not search: $n" >> "$_TMP/libnote"
+_MISS="$(awk '{ printf "%s%s", (NR > 1 ? ", " : ""), $0 }' "$_TMP/libmiss")"
+
+printf '\n## Library skills (%s apply, %s missing)\n' "$(_count "$_TMP/lib")" "$(_count "$_TMP/libmiss")"
+_list "$_TMP/lib"
+cat "$_TMP/libnote"
+
 printf '\n## Floor in effect\n'
 while IFS="$TAB" read -r d p i; do
   _section "$_TMP/ov.$i" '^floor$' > "$_TMP/f"
@@ -490,11 +559,11 @@ _list "$_TMP/hints"
 printf '\n## Vocabulary (%s)\n' "$_LANG"
 if [ "$_LANG" = fr ]; then
   echo "Sections, dans l'ordre : Bloquant | Point d'attention | Mineur (5 au plus) | Préexistant | Hors diff"
-  echo "Lignes de fin : Non vérifié : … | Conflit : … (seulement s'il y en a un)"
+  echo "Lignes de fin : Non vérifié : ${_MISS:+skills manquants : $_MISS ; }… | Conflit : … (seulement s'il y en a un)"
   echo "Dernière ligne : VERDICT: PASS | CHANGES"
 else
   echo "Sections, in order: Blocking | Should fix | Minor (5 at most) | Pre-existing | Outside diff"
-  echo "Closing lines: Not checked: … | Conflict: … (only when one exists)"
+  echo "Closing lines: Not checked: ${_MISS:+missing skills: $_MISS; }… | Conflict: … (only when one exists)"
   echo "Last line: VERDICT: PASS | CHANGES"
 fi
 

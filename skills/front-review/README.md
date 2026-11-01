@@ -30,6 +30,17 @@ subdirectory: `## Floor`, `## Always check`, `## What Blocking means here`, `## 
 `## Decisions`, `## Language`. It is read from the base branch, so a pull request cannot relax
 its own review. Format and example: [reference.md](reference.md).
 
+## Library skills
+
+The review builds on the official agent skills the repo's libraries publish (Vercel's React
+best practices and composition patterns, Vercel's web design guidelines, shadcn, React Aria,
+Svelte, TanStack, the TypeScript team's setup skill), each applied only to the files and rule axes
+it fits. The base rules and the overlay win on conflict. The script lists the ones that apply and
+whether each is installed. For a missing one, the agent offers the install command once per
+conversation, never installs it itself, never waits, and goes on without it; the report's Not
+checked line then opens with `missing skills: <skill> (<axes>)`. The map, the overlap with the
+base rules and the libraries with no official skill: [reference.md](reference.md).
+
 ## Sample output
 
 The script on the committed fixture, abridged:
@@ -62,6 +73,11 @@ TSX/JSX -> R, A, T (6)
 - P axis: on for package.json (publishable: exports or main, not private)
 - R11: off (the ESLint config carries react-hooks)
 
+## Library skills (4 apply, 4 missing)
+- vercel-react-best-practices · dependency react; Next.js-only rules (server-, async-, most bundle-): off · axes R, P · missing · install: npx skills add vercel-labs/agent-skills --skill vercel-react-best-practices -a claude-code -y
+…
+- no official review skill, do not search: @storybook/* @testing-library/* eslint typescript-eslint vitest
+
 ## Candidates (2): raise each one, or keep it under Not checked; never drop it
 - A1 src/Checkbox.module.css:8 appearance: none and no forced-colors media query in the file
 - R1 src/Input.tsx:14 {...rest} after aria-invalid (line 13)
@@ -73,7 +89,7 @@ Suppressed by the overlay (1)
 
 ## Vocabulary (en)
 Sections, in order: Blocking | Should fix | Minor (5 at most) | Pre-existing | Outside diff
-Closing lines: Not checked: … | Conflict: … (only when one exists)
+Closing lines: Not checked: missing skills: vercel-react-best-practices (R, P), vercel-composition-patterns (R), web-design-guidelines (A, U), typescript-project-setup (R); … | Conflict: … (only when one exists)
 Last line: VERDICT: PASS | CHANGES
 ```
 
@@ -91,7 +107,7 @@ Failure scenario: in Windows High Contrast the three states look the same.
 Evidence: src/Checkbox.module.css:8, :17-25. Not rendered (nothing installed).
 Fix: an `@media (forced-colors: active)` block with system colours for both states.
 
-Not checked: renders (nothing installed): forced colors, reduced motion, hover, 320 px, 200 % text.
+Not checked: missing skills: vercel-react-best-practices (R, P), vercel-composition-patterns (R), web-design-guidelines (A, U), typescript-project-setup (R); renders (nothing installed): forced colors, reduced motion, hover, 320 px, 200 % text.
 VERDICT: CHANGES
 ```
 
