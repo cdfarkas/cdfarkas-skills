@@ -17,10 +17,11 @@ order. An empty list prints `- (none)`.
 | `## Contract files` | `CLAUDE.md` files in every directory covering a changed file, `.claude/rules/*.md`, ADR folders (`docs/adr`, `docs/adrs`, `docs/decisions`, `doc/adr`, `adr`, `adrs`, `decisions`, `docs/architecture/decisions`) |
 | `## Gates` | eslint (with `react-hooks` and `jsx-a11y` yes/no), stylelint, tsc, axe, visual regression, size-limit, each CI workflow with its step names |
 | `## Rule switches` | P axis on/off per package, `R11` on/off, the ids each overlay switches off |
+| `## Library skills (n apply, m missing)` | `- <skill> · <dependency or file that triggered it> · axes <axes> · installed`, or `· missing · install: <command>` (see "Library skills"); then a Next.js docs line when `next` is a dependency, and the detected dependencies that have no official review skill |
 | `## Floor in effect` | each overlay's `## Floor` text with its scope, else the default floor below |
 | `## Candidates (n)` | `- <id> <file>:<line> <mechanism>`, then `Suppressed by the overlay (n)` with the overlay that switched each one off (hints included) |
 | `## Hints (n)` | `- <id> <file>:<line> <mechanism>`: leads the review reports or names on the Not checked line with a reason |
-| `## Vocabulary (en|fr)` | the report's section names, closing lines and verdict line |
+| `## Vocabulary (en|fr)` | the report's section names, closing lines and verdict line; the Not checked line opens with `missing skills: <skill> (<axes>), …` when any is missing |
 | `## Overlay text` | the full text of each overlay, between `--- <path> ---` and `--- end <path> ---` |
 
 Paths are relative to the git root for diff kinds and to the target folder for a path target.
@@ -219,6 +220,62 @@ Measure, never assert: a P finding without a build artefact is PLAUSIBLE at best
 | X11 | Token pedantry against a repo-wide pattern | flagging a primitive spacing token where no semantic spacing tier exists |
 | X12 | Process baggage that fights the repo's governance | mandatory design documents, persisted snapshots, closing question rounds |
 
+## Library skills
+
+front-review builds on the official agent skills the libraries in the repo publish. The script
+lists those that apply and whether each is installed; it fetches nothing. There is no standard
+skill-to-skill dependency field ([Agent Skills specification](https://agentskills.io/specification),
+[Claude Code skills](https://code.claude.com/docs/en/skills); plugin `dependencies` work only
+between marketplace plugins), so the needs are named here and in `SKILL.md`.
+
+| Skill | Applies when | Axes | Source | Install |
+|---|---|---|---|---|
+| `vercel-react-best-practices` | `react` is a dependency; `server-`, `async-` and most `bundle-` rules (Next.js, RSC) only when `next` is one too | R, P | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices), MIT | `npx skills add vercel-labs/agent-skills --skill vercel-react-best-practices -a claude-code -y` |
+| `vercel-composition-patterns` | `react` is a dependency | R | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/composition-patterns) | `npx skills add vercel-labs/agent-skills --skill vercel-composition-patterns -a claude-code -y` |
+| `web-design-guidelines` | a CSS, TSX/JSX or story file is in scope | A, U | [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills/tree/main/skills/web-design-guidelines); no rules inside, it fetches [command.md](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md) on each run | `npx skills add vercel-labs/agent-skills --skill web-design-guidelines -a claude-code -y` |
+| `typescript-project-setup` | a `tsconfig*.json` is among the changed files; a setup checklist, not review rules | R | [microsoft/typescript-skills](https://github.com/microsoft/typescript-skills), MIT | `/plugin marketplace add microsoft/typescript-skills`, then `/plugin install typescript@typescript-skills` |
+| `shadcn` | a `components.json` next to a `package.json`, or a `shadcn` dependency | U, R | [shadcn-ui/ui](https://github.com/shadcn-ui/ui/tree/main/skills), [docs](https://ui.shadcn.com/docs/skills) | `npx skills add shadcn/ui --skill shadcn -a claude-code -y` |
+| `react-aria` | `react-aria` or `react-aria-components` is a dependency | A, R | [react-aria.adobe.com/ai](https://react-aria.adobe.com/ai) | `npx skills add https://react-aria.adobe.com -a claude-code -y` |
+| `svelte-core-bestpractices` | `svelte` is a dependency | R | [sveltejs/ai-tools](https://github.com/sveltejs/ai-tools) | see [svelte.dev/docs/ai/skills](https://svelte.dev/docs/ai/skills) |
+| TanStack (Router, Table, DB) | an `@tanstack/` dependency; the skills ship inside the npm packages, version-matched | R | [TanStack Intent](https://tanstack.com/intent/latest/docs/overview) | install the project dependencies; `npx @tanstack/intent@latest list` lists them |
+
+Next.js has no review ruleset (the `vercel/next.js` skills are adoption workflows). From 16.3
+it ships its docs in `node_modules/next/dist/docs/`: the script points there when present, and
+the review reads them locally. Nothing to install.
+
+Installed means a `SKILL.md` whose frontmatter `name` is the skill's, under
+`<repo-root>/.claude/skills/*/`, `<repo-root>/.agents/skills/*/`, `$HOME/.claude/skills/*/`,
+`$HOME/.agents/skills/*/` or `$HOME/.claude/plugins/cache/*/*/*/skills/*/` (globs, no deep
+search). `npx skills add` installs under the frontmatter name in `.claude/skills/`, a link to
+`.agents/skills/`; `-g` installs in `$HOME`. TanStack counts as installed when
+`node_modules/@tanstack/*/skills` exists next to a `package.json`; the review reads the
+`SKILL.md` files there directly.
+
+Precedence on conflict: the overlay and the repo contract, then the base rules here and the
+AVOID list, then the library skill. A library rule adds findings where no base rule applies; it
+never reverses one. Where both cover the same ground, the base rule decides:
+
+| Base rule | Library rule | On overlap |
+|---|---|---|
+| R4 | `vercel-react-best-practices:rerender-no-inline-components` | both catch a remount; R4 also covers a type swap on state |
+| R5 | `vercel-composition-patterns:architecture-avoid-boolean-props` | R5 wins: a boolean that mirrors one DOM or ARIA state stays (X1) |
+| R6 | `vercel-composition-patterns:architecture-compound-components` | R6 wins: no compound without shared state |
+| R7 | `vercel-react-best-practices:rerender-derived-state-no-effect` | same rule; cite R7 |
+| R8 | `vercel-react-best-practices:rendering-conditional-render` | same rule; cite R8 |
+| R9 | `vercel-composition-patterns:patterns-children-over-render-props`, `vercel-composition-patterns:react19-no-forwardref` | same rules; cite R9 |
+
+Rule ids are the rule file names under
+[react-best-practices/rules](https://github.com/vercel-labs/agent-skills/tree/main/skills/react-best-practices/rules)
+and [composition-patterns/rules](https://github.com/vercel-labs/agent-skills/tree/main/skills/composition-patterns/rules),
+checked on 2026-11-01. Memo and dependency rules (`rerender-memo`, `rerender-dependencies`)
+still pass X7, and consumer bundle rules still pass X3.
+
+No official review skill, so do not search for one: Tailwind CSS, Vite, ESLint,
+typescript-eslint, Radix, Testing Library, Vitest, Vue, Astro (`vuejs-ai/skills` is explicitly
+unofficial, `antfu/skills` is personal). The Storybook plugin (`storybookjs/mcp` `stories`) is a
+generation workflow that needs a running Storybook 10.5+, and the Playwright CLI skills are
+tooling: neither is a review ruleset. The script lists these dependencies on one line.
+
 ## Finding and report
 
 ### Finding shape
@@ -245,8 +302,11 @@ Fix: the concrete change.
   `## What Blocking means here` overrides. **Pre-existing**: not introduced by this change.
   **Outside diff**: introduced by it, but the code to fix sits outside every hunk; give its real
   line at the head. A path target has neither: every file is new.
-- **E6** Read-only: no fix applied, nothing posted, no binary or rules fetched at review time.
-- **E7** The Not checked line names every axis, probe or candidate not verified, and why.
+- **E6** Read-only: no fix applied, nothing posted. front-review itself fetches no binary or
+  rules at review time; an installed library skill that fetches its own rules
+  (`web-design-guidelines`) may, and the Not checked line names that source.
+- **E7** The Not checked line opens with `missing skills: <skill> (<axes>)` for each missing
+  library skill, then names every axis, probe or candidate not verified, and why.
   Rejected candidates are not shown.
 
 ### Report
@@ -263,7 +323,7 @@ English, with the script's `en` vocabulary:
 ## Pre-existing
 ## Outside diff
 
-Not checked: <axes, probes and candidates not verified, and why>
+Not checked: missing skills: <skill> (<axes>), …; <axes, probes and candidates not verified, and why>
 Conflict: <check against a locked decision, only when one exists>
 VERDICT: PASS | CHANGES
 ```
@@ -280,7 +340,7 @@ French, with the `fr` vocabulary:
 ## Préexistant
 ## Hors diff
 
-Non vérifié : <axes, sondes et candidats non vérifiés, et pourquoi>
+Non vérifié : skills manquants : <skill> (<axes>), … ; <axes, sondes et candidats non vérifiés, et pourquoi>
 Conflit : <contrôle contre une décision verrouillée, seulement s'il y en a un>
 VERDICT: PASS | CHANGES
 ```

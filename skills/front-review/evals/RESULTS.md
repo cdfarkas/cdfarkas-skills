@@ -146,6 +146,8 @@ is: for every description tried, the model reviewed the code directly instead of
 - Human review of the outputs in the eval viewer: generated and handed to the author, no
   feedback yet.
 - Runs on Linux or macOS.
+- The library-skills step (Step 3 of `SKILL.md`, the script's `## Library skills` section) was
+  added after this benchmark: no run above covers it.
 
 ## Runs not completed
 
