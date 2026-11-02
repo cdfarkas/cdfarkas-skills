@@ -141,18 +141,68 @@ that led with the user's phrasings, the target repositories and the competing re
 reached 3/30 should-trigger runs at most, noise at this sample size. The description is kept as
 is: for every description tried, the model reviewed the code directly instead of loading a skill.
 
+## Library-skills step (2026-11-02)
+
+Not a replacement of the benchmark above: a separate A/B of the library-skills step (Step 3 of
+`SKILL.md`, the script's `## Library skills` section). The current skill (commit `83cc585`, with
+the step) against the previous version (commit `3385faf`), the same three evals, 3 runs each,
+Claude Opus 5.5, no library skill installed: the step should offer an install once and list the
+missing skills. Blind grading as in the main benchmark. The run prompt asked to put any message
+sent before the review at the top of the answer file.
+
+Two assertions were added for this run only (not in `evals.json` or `grade.py`):
+
+- **L1**: the Not checked / Non vérifié line names the missing library skills
+  (`vercel-react-best-practices`, or `web-design-guidelines` for the a11y eval).
+- **L2**: one install offer with at least one install command, made exactly once.
+
+Assertions passed per run, including L1 and L2 (runs 1, 2, 3):
+
+| Eval | Current | Previous |
+|---|---|---|
+| full-review | 9/9, 9/9, 9/9 | 7/9, 7/9, 7/9 (missed L1, L2) |
+| a11y-pass | 8/8, 8/8, 8/8 | 6/8, 6/8, 6/8 (missed L1, L2) |
+| fr-pr-style | 8/9, 9/9, 8/9 | 6/9, 7/9, 7/9 |
+
+Aggregate over 9 runs per arm, mean ± standard deviation:
+
+| Metric | Current | Previous |
+|---|---|---|
+| Pass rate | 98% ± 5% | 76% ± 4% |
+| Time | 234 s ± 34 s | 259 s ± 66 s |
+| Tokens | 135,835 ± 7,128 | 131,508 ± 8,319 |
+
+- **Original assertions only** (7, 6 and 7 per eval): 58/60 current, 59/60 previous. The only
+  misses are the `useLayoutEffect` trap in `fr-pr-style`: 2 current runs and 1 previous run
+  cited `src/Checkbox.tsx:14` (asking for a missing test, or a re-sync after a refused change,
+  not for a dependency array). The grader flagged its own assertion as ambiguous for these
+  cases. Read as noise, not a regression.
+- **The step works as designed.** Every current run made one install offer at the top, with the
+  commands, and listed the four missing skills on the Not checked line; no previous run did. It
+  added no measurable time; tokens +3%.
+- **Extra findings outside the planted list.** Every one checked against the fixture held, in
+  both arms. The graders called two process claims false ("confirmed by an independent
+  verifier", in two current runs). The run transcripts show those verifiers did run for exactly
+  the findings credited to them, and the reviews disclosed the findings checked inline, so no
+  claim was false.
+- **Run conditions.** The 18 runs ran at once, so most verifier subagents were refused by the
+  20-concurrent-subagent cap and findings were verified inline (as Step 6 allows). A first
+  launch of all 18 was stopped by an API safeguard after a wording change in the run prompt;
+  the runs were relaunched with the original wording plus the one sentence above.
+
 ## Not done
 
 - Human review of the outputs in the eval viewer: generated and handed to the author, no
   feedback yet.
 - Runs on Linux or macOS.
-- The library-skills step (Step 3 of `SKILL.md`, the script's `## Library skills` section) was
-  added after this benchmark: no run above covers it.
+- Runs with the library skills installed (does the skill load Vercel's rules, and do the overlay
+  and base rules win on conflict, e.g. the boolean `invalid` prop) were not done.
 
 ## Runs not completed
 
 None. All 18 benchmark answers were produced and graded, and all 60 trigger runs of each
-variant completed.
+variant completed. The first launch of the 18 library-skills runs was refused by an API
+safeguard and relaunched; all 18 relaunched runs completed and were graded.
 
 ## Reproducing
 
