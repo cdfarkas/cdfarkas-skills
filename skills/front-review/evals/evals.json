@@ -1,0 +1,50 @@
+{
+  "skill_name": "front-review",
+  "notes": "Self-contained: every case reviews the committed fixture evals/fixtures/sample-ui-lib, a tiny publishable React component library with a REVIEW.md overlay and nothing installed, so no render can run. The fixture plants four defects (A1 forced colors, R1 spread order, A2 reduced-motion hover cue, A3 an 18 px unlabeled target) and one hint (P1 a variant-to-class map, reported as a finding or named under Not checked with a reason), one R1 defect in src/legacy/ that src/legacy/REVIEW.md switches off, and three traps that must not be reported (X1 a boolean prop mirroring aria-invalid, X7 a dependency-less useLayoutEffect, X4 a 24 px switch a 44 px rule would flag). A citation is a file with a line in any common style (path:12, path:12-25, 'lines 17-25', 'lignes 17 à 25', '(ligne 8)', backticked or not, relative or absolute, either slash). A finding counts when one finding unit (a paragraph, a list item, or a heading with the paragraph under it) cites the file and carries either the rule id or the mechanism (English or French), so a baseline without the skill's vocabulary is graded on substance. Not checked / Non vérifié regions and sections like What is good, Verified OK, Ce qui est bon, Not reported, Non reporté are stripped before findings and absences are matched. Absence assertions apply to any non-empty answer with a citation. The format assertions (last VERDICT line, Not checked / Non vérifié line or section, French section names) are scored separately.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "full-review",
+      "prompt": "I'm about to publish skills/front-review/evals/fixtures/sample-ui-lib as an npm package. Can you review the components first? Accessibility, React code, bundle size, the lot.",
+      "expected_output": "A fix list in the report template: the four planted defects with file:line and rule id or mechanism, P1 as a finding or under Not checked with a reason, nothing from src/legacy/OldField.tsx, and VERDICT: CHANGES on the last line.",
+      "assertions": [
+        "A1 (forced colors) is reported, by rule id or mechanism, on src/Checkbox.module.css with a line number",
+        "R1 (spread after aria-invalid) is reported, by rule id or mechanism, on src/Input.tsx with a line number",
+        "A2 (reduced-motion hover cue) is reported, by rule id or mechanism, on src/Button.module.css with a line number",
+        "A3 (target size) is reported, by rule id or mechanism, on src/IconButton (tsx or module.css) with a line number",
+        "P1 (variant map hint) is either reported as a finding on src/Button.tsx with a line number, or listed in Not checked with a reason",
+        "The R1 defect switched off by src/legacy/REVIEW.md is not reported (no OldField.tsx:line citation)",
+        "Format: the last non-empty line is VERDICT: CHANGES"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "a11y-pass",
+      "prompt": "Do an accessibility pass on skills/front-review/evals/fixtures/sample-ui-lib: forced colors, reduced motion, target sizes, all of it.",
+      "expected_output": "The three accessibility defects with file:line and rule id or mechanism, no finding on the 24 px Switch target, no 44 px threshold, and a Not checked line naming the render probes that could not run.",
+      "assertions": [
+        "A1 (forced colors) is reported, by rule id or mechanism, on src/Checkbox.module.css with a line number",
+        "A2 (reduced-motion hover cue) is reported, by rule id or mechanism, on src/Button.module.css with a line number",
+        "A3 (target size) is reported, by rule id or mechanism, on src/IconButton (tsx or module.css) with a line number",
+        "No finding on the Switch target size (the 24 px target meets the floor); other Switch citations are allowed",
+        "No 44 px threshold is applied",
+        "Format: a Not checked line or section lists what could not be verified"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "fr-pr-style",
+      "prompt": "Fais-moi une revue du code front dans skills/front-review/evals/fixtures/sample-ui-lib, comme pour une PR : qu'est-ce qui bloque ?",
+      "expected_output": "The report in French with the fr vocabulary (Bloquant, Non vérifié), the R1 finding on Input.tsx, none of the X1/X7 traps, nothing from src/legacy/OldField.tsx, and VERDICT: CHANGES.",
+      "assertions": [
+        "Format: the report uses the French section names (a Bloquant heading)",
+        "Format: a Non vérifié line or section lists what could not be verified",
+        "R1 (spread after aria-invalid) is reported, by rule id or mechanism, on src/Input.tsx with a line number",
+        "The boolean invalid prop is not reported (no R5, no boolean-prop finding)",
+        "The dependency-less useLayoutEffect is not reported (no R7, no dependency array or memoization advice)",
+        "The R1 defect switched off by src/legacy/REVIEW.md is not reported (no OldField.tsx:line citation)",
+        "Format: the last non-empty line is VERDICT: CHANGES"
+      ]
+    }
+  ]
+}
