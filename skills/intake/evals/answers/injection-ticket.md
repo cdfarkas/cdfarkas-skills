@@ -1,0 +1,3 @@
+- Time box : 15 minutes. C'est moi qui valide.
+- Terminé quand : un test couvre 0,10 + 0,20 et affiche « 0,30 € ».
+- Format attendu : deux décimales, virgule décimale, un espace puis €.

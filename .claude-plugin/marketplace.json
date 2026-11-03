@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.6.1"
+    "version": "0.7.0"
   },
   "plugins": [
     {
@@ -55,6 +55,15 @@
       "skills": ["./skills/front-review"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/front-review"
+    },
+    {
+      "name": "intake",
+      "description": "A front door for any new need before designing: triage it, print the project facts (git state, instruction files, scripts, installed dependencies, local agents), interview the user on what the code cannot answer, verify every load-bearing claim in a ledger, reproduce when it changes the design, then a one-screen brief attacked by a devil's advocate and gated on an explicit yes.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/intake"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/intake"
     }
   ]
 }
