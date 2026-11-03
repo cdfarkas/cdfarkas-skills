@@ -13,7 +13,8 @@ Diff rules, with <base-ref> (the diff from the merge base with <base-ref> to the
   - a change under skills/<name>/scripts/, hooks/, agents/ or to its SKILL.md also changes
     skills/<name>/README.md or reference.md
   - a change to scripts/*.py or .github/workflows/ci.yml also changes CLAUDE.md or
-    docs/how-these-skills-are-built.md
+    docs/how-these-skills-are-built.md; an action version bump alone (only `uses:` lines of
+    ci.yml edited) is exempt
   - a plugin added to or removed from .claude-plugin/marketplace.json also changes the root README.md
 """
 from __future__ import annotations
@@ -25,6 +26,7 @@ import sys
 from pathlib import Path
 
 MANIFEST = ".claude-plugin/marketplace.json"
+CI = ".github/workflows/ci.yml"
 ROOT_README = Path("README.md")
 TOOLING_DOCS = ("CLAUDE.md", "docs/how-these-skills-are-built.md")
 CODE_DIRS = ("scripts/", "hooks/", "agents/")
@@ -59,16 +61,23 @@ def plugin_names(raw: str) -> set[str]:
     return {p.get("name", "") for p in json.loads(raw).get("plugins", [])}
 
 
+def pins_only(mb: str, path: str) -> bool:
+    lines = git("diff", "-U0", mb, "--", path).splitlines()
+    edits = [line[1:] for line in lines if line.startswith(("+", "-")) and not line.startswith(("+++", "---"))]
+    return all(re.match(r"\s*(- )?uses:", line) for line in edits)
+
+
 def diff_based(base: str, skills: list[Path]) -> list[str]:
     errors: list[str] = []
-    changed = set(git("diff", "--name-only", git("merge-base", base, "HEAD").strip()).split())
+    mb = git("merge-base", base, "HEAD").strip()
+    changed = set(git("diff", "--name-only", mb).split())
     for skill in skills:
         prefix = f"{skill}/"
         code = any(f.startswith(prefix + d) for f in changed for d in CODE_DIRS) or prefix + "SKILL.md" in changed
         docs = prefix + "README.md" in changed or prefix + "reference.md" in changed
         if code and not docs:
             errors.append(f"{skill}: code changed, docs untouched (README.md / reference.md)")
-    tooling = any(re.fullmatch(r"scripts/[^/]+\.py", f) for f in changed) or ".github/workflows/ci.yml" in changed
+    tooling = any(re.fullmatch(r"scripts/[^/]+\.py", f) for f in changed) or (CI in changed and not pins_only(mb, CI))
     if tooling and not any(d in changed for d in TOOLING_DOCS):
         errors.append(f"tooling changed, docs untouched ({' / '.join(TOOLING_DOCS)})")
     if MANIFEST in changed and Path(MANIFEST).is_file():
