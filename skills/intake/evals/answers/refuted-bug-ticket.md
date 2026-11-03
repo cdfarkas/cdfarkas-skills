@@ -1,0 +1,4 @@
+- Qui l'a signalé : le support, après un appel client ; pas de capture d'écran, pas de logs.
+- Time box : 20 minutes. C'est moi (tech lead) qui valide.
+- Terminé quand : soit le bug est corrigé avec un test de non-régression, soit le ticket est fermé avec des preuves.
+- Si la prémisse du panier vide est fausse : rédige le commentaire à poster sur SHOP-142 avec les preuves, et dis ce qu'on doit demander au support.
