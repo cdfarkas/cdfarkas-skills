@@ -24,6 +24,7 @@ evaluation is published as it happened, including the runs that failed or did no
 | [`pr-guardian`](skills/pr-guardian/) | A background agent that keeps a pushed branch mergeable until its pull request is green, merged or blocked: rebase, CI fixes, review triage, with `--dry-run`; checks its prerequisites and proposes the fix for what is missing | `gh`, `jq`, `git`, `timeout` |
 | [`dead-code-audit`](skills/dead-code-audit/) | Dead code in a JS/TS repo, found with Knip zero-install — unused files, exports, types and dependencies, categorized and flagged for likely false positives, with a before/after removable-LOC score | `node`, `jq` |
 | [`front-review`](skills/front-review/) | A front-end code review for any React/TS/CSS stack, tuned per repo by a `REVIEW.md` overlay read from the base branch: mechanical candidates that cannot be dropped, judgement rules on top, every finding verified, a fix list with a verdict | `git`; `gh` for a PR |
+| [`intake`](skills/intake/) | A front door for any new need before designing: project facts from a script, an interview on what the code cannot answer, a ledger that verifies every load-bearing claim, then a one-screen brief attacked by a devil's advocate and gated on your yes | `bash`; `git`, `node` optional |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -36,9 +37,10 @@ Each folder has its own README with usage, output and evaluation results.
 | `pr-guardian` | 5/5, 5/5, 4/4 | 2/5, 2/5, 1/4 | 22 s with, 308 s without; tokens not measured | [RESULTS.md](skills/pr-guardian/evals/RESULTS.md) |
 | `dead-code-audit` | 7/7, 4/4, 4/4 | 0/7, 0/4, 0/4 | ~2.5 s with (script, Knip cached) | [RESULTS.md](skills/dead-code-audit/evals/RESULTS.md) |
 | `front-review` | 7/7, 6/6, 7/7 (3 runs, identical) | 3/7, 5/6, 3/7 to 6/7 (3 runs) | 287 s and 138k with, 152 s and 112k without | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
+| `intake` | 8/9, 10/10, 9/9, 6/6 | 6/9, 3/10, 7/9, 3/6 | 149 s and 524k with, 94 s and 420k without | [RESULTS.md](skills/intake/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
-sessions (`front-review`: 3 runs per arm). `not measured` means the run aborted (an API rate
+sessions (`front-review`: 3 runs per arm; `intake`: four multi-turn prompts). `not measured` means the run aborted (an API rate
 limit, in the `pr-todo` case) or the harness did not report the figure; it is reported as such,
 never as a zero.
 
@@ -65,6 +67,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin install pr-guardian@cdfarkas-skills
 /plugin install dead-code-audit@cdfarkas-skills
 /plugin install front-review@cdfarkas-skills
+/plugin install intake@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
