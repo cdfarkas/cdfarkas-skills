@@ -76,8 +76,8 @@ every skill has `README.md`, `SKILL.md` and `reference.md`, a row in the root ta
 and names its `agents/` and `hooks/` when it ships them — and on a PR it checks the
 diff: a change to a skill's scripts, hooks, agent or `SKILL.md` must touch that skill's
 `README.md` or `reference.md`; a change to the repo tooling must touch `CLAUDE.md` or
-this file; a plugin added or removed in the marketplace manifest must change the root
-`README.md`.
+this file (a bump of an action's version alone excepted); a plugin added or removed in
+the marketplace manifest must change the root `README.md`.
 
 The diff rule is a "did you look" gate, not a proof of quality: a one-word edit to the
 README passes it. Its job is to make forgetting the docs a CI failure instead of a

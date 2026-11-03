@@ -29,7 +29,8 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
    (`validate-skills.py` refuses it otherwise; rule 4 of the docs says why).
 5. **Docs follow the code.** Any change to a skill's `scripts/`, `hooks/`, `agents/` or
    `SKILL.md` updates its `README.md` or `reference.md` in the same PR; a change to
-   `scripts/*.py` or `.github/workflows/ci.yml` updates this file or
+   `scripts/*.py` or `.github/workflows/ci.yml` (a bump of an action's version alone
+   excepted) updates this file or
    `docs/how-these-skills-are-built.md`; a plugin added to or removed from the
    marketplace manifest changes the root `README.md` table. `scripts/check-docs-sync.py`
    enforces it, and always checks that every skill has its three Markdown files, its row
