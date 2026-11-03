@@ -1,0 +1,4 @@
+- Oui, demander une confirmation avant de vider le panier.
+- Masquer le bouton quand le panier est vide.
+- Time box : 30 minutes. C'est moi qui valide.
+- Terminé quand : une story Storybook montre les nouveaux états et un test couvre confirmer et annuler.

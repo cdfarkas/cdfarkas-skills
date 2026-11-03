@@ -1,0 +1,4 @@
+- Critères : coût de maintenance, courbe d'apprentissage pour l'équipe (3 devs juniors arrivés cette année, les deux seniors Redux sont partis), effort de migration.
+- Le comité tech décide vendredi ; moi, je recommande seulement.
+- Livrable : une fiche de décision d'une page, en français.
+- Time box : 30 minutes.
