@@ -110,4 +110,6 @@ python3 skills/intake/evals/grade.py runs/without
 ```
 
 Each `run.sh` call takes a few minutes and spends real tokens. Exit code 0 from `grade.py` means
-every assertion passed.
+every assertion passed. A run that completes deletes the session transcript Claude Code saved
+under `~/.claude/projects/`, so eval runs do not pass for work sessions in `/insights`; when a
+turn fails, `run.sh` keeps it and prints its path, to resume it.
