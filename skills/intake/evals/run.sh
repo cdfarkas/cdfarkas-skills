@@ -3,7 +3,8 @@
 # run.sh: run one intake eval case headless, with or without the skill, and write one answer
 # file <out-dir>/<case>.md for grade.py: the agent's reply per turn, then what the harness saw
 # (commands run, files written, project changes after each turn, usage). Writes only to a
-# temporary copy of the fixture and to <out-dir>.
+# temporary copy of the fixture and to <out-dir>, then deletes the session transcript claude
+# leaves in ${CLAUDE_CONFIG_DIR:-~/.claude}/projects; a failed turn keeps it and prints where.
 
 set -euo pipefail
 export LC_ALL=C
@@ -149,9 +150,14 @@ mkdir -p "$out"
            + (.cache_read_input_tokens // 0)] | add // 0) tokens"'
 } > "$out/$name.md"
 
+projects="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects"
+log=""
+[ -n "$session" ] && [ -d "$projects" ] && log=$(find "$projects" -mindepth 2 -maxdepth 2 -name "$session.jsonl" -print -quit)
 if [ "$failed" = 1 ]; then
-  echo "a turn failed; streams kept in $work" >&2
+  echo "a turn failed; streams kept in $work${log:+, session transcript in $log}" >&2
   exit 1
 fi
 rm -rf "$work"
+# The suffix is the encoded temp cwd .../project: never delete a real project's transcripts.
+case "${log%/*}" in *-project) rm -rf "${log%/*}" ;; esac
 echo "$out/$name.md"
