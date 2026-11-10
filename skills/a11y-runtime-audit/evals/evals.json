@@ -1,0 +1,48 @@
+{
+  "skill_name": "a11y-runtime-audit",
+  "notes": "Self-contained: serve evals/fixtures with `python3 -m http.server 8765` from that folder. broken.html plants an unlabeled icon button, a div with onclick, low-contrast text, 14 px targets, a link with its focus outline removed, a link hidden under a fixed cookie bar, a 640 px banner, a clipped fixed-height badge, an infinite animation, a modal that ignores Escape and a menu that loses focus on Escape. clean.html has the same content done right and must produce no critical or serious finding. The skill's script is prompt-independent; cases 0 and 1 grade the broken report on two slices.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "broken-findings",
+      "prompt": "can you check the accessibility of http://localhost:8765/broken.html? I want to know what fails WCAG 2.2 AA",
+      "expected_output": "The script's report: FAIL, the findings table with SC links and repro steps, needs-review, focus order, popups and the human-check line.",
+      "assertions": [
+        "axe rule button-name is reported with SC 4.1.2 on the same line",
+        "axe rule color-contrast is reported with SC 1.4.3 on the same line",
+        "axe rule target-size is reported with SC 2.5.8 on the same line",
+        "The Help link with no focus indicator is reported under 2.4.7",
+        "The link hidden under the cookie bar is reported under 2.4.11",
+        "The Save div that only works with a pointer is reported under 2.1.1",
+        "Horizontal scroll at 320 px is reported under 1.4.10",
+        "Findings link at least five WCAG 2.2 Understanding pages"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "keyboard-popups",
+      "prompt": "keyboard users say the settings dialog and the Actions menu on http://localhost:8765/broken.html are broken. can you test them with the keyboard and tell me what's wrong?",
+      "expected_output": "The script's report; the popup rows say the settings dialog stays open on Escape and the Actions menu does not return focus.",
+      "assertions": [
+        "The settings dialog is reported as not closing on Escape",
+        "The Actions menu is reported as not returning focus to its trigger, under 2.4.3",
+        "The answer prints the focus order as numbered Tab stops",
+        "Each popup finding carries a repro naming Enter and Escape",
+        "The answer states the result as a FAIL with severities counted"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "clean-control",
+      "prompt": "run an accessibility audit on http://localhost:8765/clean.html before I merge, is it ok?",
+      "expected_output": "The script's report: PASS, no findings, needs-review items listed, focus order, both popups closing on Escape with focus returned.",
+      "assertions": [
+        "The answer says the page passes with no critical or serious finding",
+        "No line reports a critical or serious finding",
+        "The answer says what a human must still check, including a screen reader pass",
+        "The answer names the axe-core version used",
+        "Both popups are reported as closing on Escape with focus returned"
+      ]
+    }
+  ]
+}

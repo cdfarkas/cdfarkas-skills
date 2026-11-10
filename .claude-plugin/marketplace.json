@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills that ship with the evidence they work: prompts, assertions and before/after scores.",
-    "version": "0.7.1"
+    "version": "0.8.0"
   },
   "plugins": [
     {
@@ -64,6 +64,15 @@
       "skills": ["./skills/intake"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/intake"
+    },
+    {
+      "name": "a11y-runtime-audit",
+      "description": "Audit a rendered page (dev server or Storybook story) for WCAG 2.2 A/AA in headless Chromium: axe-core rules plus a keyboard Tab walk (focus order, visible focus, traps, focus hidden under sticky content), popups closed with Escape and focus return, reflow at 320 px, text spacing and reduced motion. Every finding has its success criterion, severity and a repro step.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/a11y-runtime-audit"],
+      "category": "development",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/a11y-runtime-audit"
     }
   ]
 }
