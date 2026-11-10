@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account settings</title>
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; margin: 0; padding: 16px; }
+  .cookie { position: fixed; top: 0; left: 0; right: 0; height: 90px; background: #222; color: #fff; padding: 8px; z-index: 10; }
+  .under-cookie { position: absolute; top: 30px; left: 24px; }
+  main { margin-top: 110px; }
+  .muted { color: #b5b5b5; background: #fff; }
+  .nofocus:focus { outline: none; }
+  .fake-btn { display: inline-block; padding: 8px 12px; background: #0b57d0; color: #fff; cursor: pointer; }
+  .tiny { width: 14px; height: 14px; padding: 0; margin: 0; border: 1px solid #333; background: #eee; }
+  .banner { width: 640px; background: #f3f3f3; padding: 8px; }
+  .badge { display: inline-block; height: 20px; line-height: 20px; overflow: hidden; background: #fde68a; color: #111; padding: 0 6px; }
+  .spinner { width: 24px; height: 24px; border: 3px solid #999; border-top-color: #111; border-radius: 50%; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  [role="dialog"] { position: fixed; inset: 20% 20%; background: #fff; border: 2px solid #111; padding: 16px; z-index: 20; }
+  [role="menu"] { list-style: none; margin: 4px 0; padding: 4px; border: 1px solid #333; width: 160px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="cookie">We use cookies. <a style="color:#fff" href="#cookies">Read the policy</a></div>
+<a class="under-cookie" href="#hidden-link">Skip to content</a>
+<main>
+  <h1>Account settings</h1>
+  <p class="muted">Your changes are saved automatically every few minutes.</p>
+  <div class="banner">Plan: Business · 12 seats · renews 2027-01-01</div>
+  <p><span class="badge">Beta feature with a long label</span> <span class="spinner"></span></p>
+
+  <button class="icon" type="button"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 8h12"/></svg></button>
+  <div class="fake-btn" onclick="this.textContent='Saved'">Save</div>
+  <a class="nofocus" href="#help">Help</a>
+
+  <p>
+    <button class="tiny" type="button" aria-label="Previous"></button><button class="tiny" type="button" aria-label="Next"></button>
+  </p>
+
+  <button id="open-modal" type="button" aria-haspopup="dialog">Open settings</button>
+  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+    <h2 id="modal-title">Settings</h2>
+    <button type="button" id="close-modal">Close</button>
+  </div>
+
+  <button id="actions" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="actions-menu">Actions</button>
+  <ul id="actions-menu" role="menu" hidden>
+    <li role="menuitem" tabindex="-1">Rename</li>
+    <li role="menuitem" tabindex="-1">Delete</li>
+  </ul>
+</main>
+<script>
+  const modal = document.getElementById('modal');
+  document.getElementById('open-modal').addEventListener('click', () => { modal.hidden = false; document.getElementById('close-modal').focus(); });
+  document.getElementById('close-modal').addEventListener('click', () => { modal.hidden = true; });
+
+  const actions = document.getElementById('actions');
+  const menu = document.getElementById('actions-menu');
+  actions.addEventListener('click', () => {
+    menu.hidden = false;
+    actions.setAttribute('aria-expanded', 'true');
+    menu.querySelector('[role=menuitem]').focus();
+  });
+  menu.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { menu.hidden = true; actions.setAttribute('aria-expanded', 'false'); }
+  });
+</script>
+</body>
+</html>

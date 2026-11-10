@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Account settings</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 16px; color: #111; background: #fff; }
+  .muted { color: #555; }
+  .banner { max-width: 640px; background: #f3f3f3; padding: 8px; }
+  .badge { display: inline-block; background: #fde68a; color: #111; padding: 0 6px; }
+  button, a { min-height: 24px; min-width: 24px; }
+  .pager button { width: 32px; height: 32px; }
+  .spinner { width: 24px; height: 24px; border: 3px solid #767676; border-top-color: #111; border-radius: 50%; }
+  @media (prefers-reduced-motion: no-preference) { .spinner { animation: spin 1s linear infinite; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  [role="menu"] { list-style: none; margin: 4px 0; padding: 4px; border: 1px solid #333; width: 160px; }
+  [role="menuitem"] { padding: 4px; }
+  [role="menuitem"]:focus { outline: 2px solid #0b57d0; }
+</style>
+</head>
+<body>
+<a href="#main">Skip to content</a>
+<main id="main">
+  <h1>Account settings</h1>
+  <p class="muted">Your changes are saved automatically every few minutes.</p>
+  <div class="banner">Plan: Business · 12 seats · renews 2027-01-01</div>
+  <p><span class="badge">Beta feature with a long label</span> <span class="spinner" role="img" aria-label="Loading"></span></p>
+
+  <button type="button" aria-label="Collapse section"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12"/></svg></button>
+  <button type="button" id="save">Save</button>
+  <a href="#help">Help</a>
+
+  <p class="pager">
+    <button type="button" aria-label="Previous">&lsaquo;</button>
+    <button type="button" aria-label="Next">&rsaquo;</button>
+  </p>
+
+  <button id="open-modal" type="button" aria-haspopup="dialog">Open settings</button>
+  <dialog id="modal" aria-labelledby="modal-title">
+    <h2 id="modal-title">Settings</h2>
+    <button type="button" id="close-modal">Close</button>
+  </dialog>
+
+  <button id="actions" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="actions-menu">Actions</button>
+  <ul id="actions-menu" role="menu" aria-labelledby="actions" hidden>
+    <li role="menuitem" tabindex="-1">Rename</li>
+    <li role="menuitem" tabindex="-1">Delete</li>
+  </ul>
+</main>
+<script>
+  const modal = document.getElementById('modal');
+  document.getElementById('open-modal').addEventListener('click', () => modal.showModal());
+  document.getElementById('close-modal').addEventListener('click', () => modal.close());
+
+  const actions = document.getElementById('actions');
+  const menu = document.getElementById('actions-menu');
+  const closeMenu = () => { menu.hidden = true; actions.setAttribute('aria-expanded', 'false'); actions.focus(); };
+  actions.addEventListener('click', () => {
+    menu.hidden = false;
+    actions.setAttribute('aria-expanded', 'true');
+    menu.querySelector('[role=menuitem]').focus();
+  });
+  menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+</script>
+</body>
+</html>
