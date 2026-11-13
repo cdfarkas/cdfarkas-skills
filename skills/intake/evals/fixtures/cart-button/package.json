@@ -1,4 +1,4 @@
 { "name": "shop-front", "private": true, "type": "module",
   "scripts": { "test": "vitest run", "storybook": "storybook dev -p 6006", "lint": "eslint src" },
   "dependencies": { "react": "19.2.0", "react-dom": "19.2.0" },
-  "devDependencies": { "vitest": "4.0.8", "@testing-library/react": "16.3.0", "storybook": "10.0.7", "eslint": "9.39.1" } }
+  "devDependencies": { "vitest": "4.0.8", "@testing-library/react": "16.3.3", "storybook": "10.0.7", "eslint": "9.39.5" } }
