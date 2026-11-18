@@ -1,2 +1,2 @@
 { "name": "shop-front", "private": true, "type": "module",
-  "dependencies": { "react": "19.2.0", "react-dom": "19.2.0", "@reduxjs/toolkit": "2.9.0", "react-redux": "9.2.0" } }
+  "dependencies": { "react": "19.3.1", "react-dom": "19.3.1", "@reduxjs/toolkit": "2.14.0", "react-redux": "9.3.1" } }
