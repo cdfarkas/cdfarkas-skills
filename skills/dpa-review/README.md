@@ -55,7 +55,9 @@ Not a legal opinion: this lists what the contract contains, lacks or leaves weak
 ## What it does not do
 
 It does not assess standard contractual clauses or a transfer impact assessment, national
-law beyond flagging the French HDS question, or the main services agreement. The candidate
+law beyond flagging the French HDS question, or the main services agreement. For a US
+transfer it asks to check the recipient on the official Data Privacy Framework list; it
+never says whether the recipient is listed. The candidate
 locator is a regex over lines; the agent decides every status by reading the contract.
 
 ## Sources
@@ -71,7 +73,11 @@ One run per case, with and without the skill, graded by `evals/grade.py` (regex 
 |---|---|---|
 | `own-contract-fr` | 8/8 | 2/8 |
 | `draft-gaps-en` | 7/7 | 1/7 |
-| `provider-training` | 7/7 | 0/7 |
+| `provider-training` | 8/8 | 1/8 |
+
+Run 2, after the skill gained the Data Privacy Framework list check for US transfers (run 1
+scored 8/8, 7/7, 7/8 with and 2/8, 1/7, 0/8 without on the same assertions). The baseline
+raised the DPF point in prose but has no table row, so it fails that assertion on format.
 
 Most of the gap is the skill's fixed table, which a baseline cannot reproduce. The
 substantive gap is that baselines give a verdict ("conforme", "non conformes", "pas en

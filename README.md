@@ -43,7 +43,7 @@ Each folder has its own README with usage, output and evaluation results.
 | `front-review` | 7/7, 6/6, 7/7 (3 runs, identical) | 3/7, 5/6, 3/7 to 6/7 (3 runs) | 287 s and 138k with, 152 s and 112k without | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
 | `intake` | 8/9, 10/10, 9/9, 6/6 | 6/9, 3/10, 7/9, 3/6 | 149 s and 524k with, 94 s and 420k without | [RESULTS.md](skills/intake/evals/RESULTS.md) |
 | `a11y-runtime-audit` | 8/8, 5/5, 5/5 | 4/8, 2/5, 5/5 | 40 s and 77k with, 71 s and 76k without | [RESULTS.md](skills/a11y-runtime-audit/evals/RESULTS.md) |
-| `dpa-review` | 8/8, 7/7, 7/7 | 2/8, 1/7, 0/7 | not measured | [RESULTS.md](skills/dpa-review/evals/RESULTS.md) |
+| `dpa-review` | 8/8, 7/7, 8/8 (run 2; run 1: 8/8, 7/7, 7/8) | 2/8, 1/7, 1/8 (run 2; run 1: 2/8, 1/7, 0/8) | not measured; one run per case, skill and grader changed between runs | [RESULTS.md](skills/dpa-review/evals/RESULTS.md) |
 | `fr-privacy-triage` | 7/7, 7/7, 7/7, 6/6, 7/7 (run 2; run 1: 6/7, 7/7, 7/7, 6/6, 7/7) | 3/7, 3/7, 3/7, 4/6, 4/7 (run 2; run 1: 3/7, 2/7, 3/7, 3/6, 4/7) | not measured; one run per case, skill and grader changed between runs, both arms loaded the author's user configuration | [RESULTS.md](skills/fr-privacy-triage/evals/RESULTS.md) |
 | `fr-dpia` | 7/7, 8/8, 4/5 | 5/7, 1/8, 3/5 | not measured | [RESULTS.md](skills/fr-dpia/evals/RESULTS.md) |
 
