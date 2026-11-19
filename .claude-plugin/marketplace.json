@@ -73,6 +73,15 @@
       "skills": ["./skills/a11y-runtime-audit"],
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/a11y-runtime-audit"
+    },
+    {
+      "name": "dpa-review",
+      "description": "Review a data processing agreement (GDPR art. 28), French or English, drafted by you or offered by a provider: each art. 28(3) item PRESENT / WEAK / MISSING with the clause it rests on, risk points (transfers, training use, retention, breach delay, liability, health data), bracket placeholders, and questions for a lawyer. Never certifies compliance. Read-only.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/dpa-review"],
+      "category": "compliance",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/dpa-review"
     }
   ]
 }
