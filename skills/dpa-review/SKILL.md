@@ -76,6 +76,12 @@ Statuses: `PRESENT`, `WEAK`, `MISSING` for mandatory items; `RISK`, `OK`, `SILEN
 points. Evidence is the clause number or heading, its `L<n>` and a short quote. The full
 format and its rules are in [reference.md](reference.md), "Verdict file".
 
+When data goes to the United States (a US provider or sub-processor, or data processed
+there), the `transfers` row's last column asks to check that the recipient is listed as
+active on the Data Privacy Framework List (https://www.dataprivacyframework.gov/list) and,
+if it is not, which other art. 46 mechanism (e.g. standard contractual clauses) the contract
+names. Never state whether it is listed: you have not checked.
+
 Questions for the lawyer cover what the text cannot settle: whether a provider's own-purpose
 use makes it a controller (art. 28(10)), whether a transfer mechanism holds, whether a liability
 cap is acceptable, HDS for health data in France, and anything the user must decide.

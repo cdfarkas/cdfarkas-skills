@@ -55,6 +55,14 @@ def verdict(text: str) -> str:
 
 
 QUESTIONS = re.compile(r"^## (Questions for a lawyer|Questions pour un avocat)\s*\n+1\. \S", re.M)
+DPF = re.compile(r"Data Privacy Framework|\bDPF\b|dataprivacyframework\.gov", re.I)
+
+
+def questions(text: str) -> str:
+    m = re.search(r"^## (Questions for a lawyer|Questions pour un avocat)\s*$", text, re.M)
+    return text[m.end():] if m else ""
+
+
 PLACEHOLDERS = ["[CLIENT NAME]", "[DATE]", "[number]", "[REGION]", "[...]", "[AMOUNT]", "[SIGNATORY]"]
 
 
@@ -145,6 +153,9 @@ def grade_provider(text: str, ctx: dict) -> list[tuple[str, bool, str]]:
          " | ".join(training)[:200] or "no row"),
         ("the transfers row names the destination or the mechanism",
          bool(re.search(r"United States|[ÉE]tats-Unis|Standard Contractual|SCC|Module Two|clauses contractuelles", " ".join(transfers), re.I)),
+         " | ".join(transfers)[:200] or "no row"),
+        ("the transfers row or the questions raise the Data Privacy Framework list check for the US transfer",
+         bool(DPF.search(" ".join(transfers) + " " + questions(text))),
          " | ".join(transfers)[:200] or "no row"),
         ("the audits row 28(3)(h) is WEAK or MISSING",
          status(text, "28(3)(h)") in ("WEAK", "MISSING"), status(text, "28(3)(h)")),
