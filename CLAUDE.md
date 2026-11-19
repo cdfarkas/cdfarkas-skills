@@ -54,3 +54,24 @@ skills/<name>/
 ```
 
 Register the skill in `.claude-plugin/marketplace.json`, give it a `README.md` in its folder (usage, sample output, evaluation) and one row in the root `README.md` table.
+
+## Checking legal sources
+
+Skills that rely on official legal pages list them in `skills/<name>/sources.json` (id, url,
+quote of at most 300 chars, retrieved date, status `read` or `unread`). The owner runs
+`python3 scripts/check-sources.py` by hand (stdlib only, writes nothing; `--json`, skill names
+to restrict, `--root` for another tree, `--self-test` offline). It fetches each distinct URL
+once with a plain client and reports per source:
+
+- `CHANGED`: the page was fetched and the quote is missing (exit 1). Update the skill and the
+  source's quote and `retrieved` date in the same PR.
+- `UNREACHABLE`: 4xx/5xx, timeout, empty or bot-protection body. Retry later.
+- `BLOCKED`: the site refuses automated clients (legifrance.gouv.fr answers 403, eur-lex 202 empty).
+- `UNREAD`: the manifest says the page was never read; a reminder.
+- `UNCHANGED`: quote found. An invalid manifest exits 2.
+
+For each `BLOCKED` source, open it from Claude with a web-fetch tool and ask whether the page
+still contains the quote and, for Légifrance, whether the article version is still "en vigueur"
+(an amended article gets a new LEGIARTI id, so an old URL shows an outdated version instead of
+failing). That web-fetch check is model-judged, not exact: treat a doubtful answer as a reason
+to open the page yourself.
