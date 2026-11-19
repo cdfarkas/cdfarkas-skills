@@ -11,7 +11,8 @@ Structural rules, always:
 
 Diff rules, with <base-ref> (the diff from the merge base with <base-ref> to the working tree):
   - a change under skills/<name>/scripts/, hooks/, agents/ or to its SKILL.md also changes
-    skills/<name>/README.md or reference.md
+    skills/<name>/README.md or reference.md; a package-lock.json change, or a package.json change
+    confined to its dependency maps, is exempt
   - a change to scripts/*.py or .github/workflows/ci.yml also changes CLAUDE.md or
     docs/how-these-skills-are-built.md; an action version bump alone (only `uses:` lines of
     ci.yml edited) is exempt
@@ -30,6 +31,7 @@ CI = ".github/workflows/ci.yml"
 ROOT_README = Path("README.md")
 TOOLING_DOCS = ("CLAUDE.md", "docs/how-these-skills-are-built.md")
 CODE_DIRS = ("scripts/", "hooks/", "agents/")
+DEP_KEYS = ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies")
 
 
 def git(*args: str) -> str:
@@ -67,13 +69,28 @@ def pins_only(mb: str, path: str) -> bool:
     return all(re.match(r"\s*(- )?uses:", line) for line in edits)
 
 
+def deps_only(mb: str, path: str) -> bool:
+    name = Path(path).name
+    if name == "package-lock.json":
+        return True
+    if name != "package.json" or not Path(path).is_file():
+        return False
+    try:
+        before = json.loads(git("show", f"{mb}:{path}"))
+    except subprocess.CalledProcessError:
+        return False
+    after = json.loads(Path(path).read_text())
+    return {k: v for k, v in before.items() if k not in DEP_KEYS} == {k: v for k, v in after.items() if k not in DEP_KEYS}
+
+
 def diff_based(base: str, skills: list[Path]) -> list[str]:
     errors: list[str] = []
     mb = git("merge-base", base, "HEAD").strip()
     changed = set(git("diff", "--name-only", mb).split())
     for skill in skills:
         prefix = f"{skill}/"
-        code = any(f.startswith(prefix + d) for f in changed for d in CODE_DIRS) or prefix + "SKILL.md" in changed
+        code = any(f.startswith(prefix + d) and not deps_only(mb, f) for f in changed for d in CODE_DIRS)
+        code = code or prefix + "SKILL.md" in changed
         docs = prefix + "README.md" in changed or prefix + "reference.md" in changed
         if code and not docs:
             errors.append(f"{skill}: code changed, docs untouched (README.md / reference.md)")
