@@ -78,8 +78,20 @@ files, and keep passing them on every call.
      --why "<risk or obligation at stake>" --blocks "<decision or step it blocks>"
    ```
 
-   `appended:` means it was added under `## Added later`; `duplicate: already listed at
-   <file>:<line>` means it was already there: cite that line instead. One question per call.
+   `duplicate: already listed at <file>:<line>` means the same text is already there,
+   nothing written: cite that line. `appended:` means it was added under `## Added later`;
+   up to three `candidate: <file>:<line>: <item> (score N.NN)` lines may follow, the listed
+   questions sharing the most words with it. The script only ranks them by shared words;
+   whether one is the same question is your judgement, by meaning: synonyms ("notes
+   vocales" / "enregistrements vocaux"), rewording, or the same decision blocked make it the
+   same; a different provider, country, data or feature makes it different, whatever the
+   score. If it is the same, undo the filing and cite the candidate instead:
+
+   ```bash
+   bash <skill-dir>/scripts/fr-privacy-triage.sh drop --question "<the question just filed>"
+   ```
+
+   If it is different, or no candidate is printed, keep it. One question per call.
 5. **Table.** Pipe one line per point, `point<TAB>classification<TAB>reference`, into
    `table`, and end the answer with its output, unchanged:
    - SETTLED: the entry title and its date, e.g. `decision log "Audio retention", 2026-03-12`

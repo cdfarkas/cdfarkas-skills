@@ -127,6 +127,71 @@
       "retrieved": "2026-11-19",
       "method": "curl",
       "status": "unread"
+    },
+    {
+      "id": "dpf-adequacy-2023-1795",
+      "url": "https://eur-lex.europa.eu/eli/dec_impl/2023/1795/oj",
+      "title": "Commission Implementing Decision (EU) 2023/1795, adequacy decision for the EU-US Data Privacy Framework (EUR-Lex)",
+      "used_in": [
+        "reference.md#sources"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    },
+    {
+      "id": "ec-eu-us-transfers-dpf",
+      "url": "https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/eu-us-data-transfers_en",
+      "title": "European Commission, EU-US data transfers: adequacy decision on the EU-US Data Privacy Framework",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items",
+        "SKILL.md#step-3-write-the-verdict-file"
+      ],
+      "quote": "On the basis of the adequacy decision, personal data can flow freely from the EU to companies in the United States that participate in the Data Privacy Framework.",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "ec-eu-us-transfers-other-tools",
+      "url": "https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/eu-us-data-transfers_en",
+      "title": "European Commission, EU-US data transfers: other transfer tools remain available",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "These safeguards therefore also faciliate the use of other tools, such as standard contractual clauses and binding corporate rules.",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "dpf-list",
+      "url": "https://www.dataprivacyframework.gov/list",
+      "title": "Data Privacy Framework List (US Department of Commerce)",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items",
+        "SKILL.md#step-3-write-the-verdict-file"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "unread"
+    },
+    {
+      "id": "dpf-program-overview",
+      "url": "https://www.dataprivacyframework.gov/Program-Overview",
+      "title": "Data Privacy Framework Program Overview (US Department of Commerce)",
+      "used_in": [
+        "reference.md#sources"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "unread"
     }
   ]
 }
