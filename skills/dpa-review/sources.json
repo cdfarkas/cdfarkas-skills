@@ -1,0 +1,132 @@
+{
+  "sources": [
+    {
+      "id": "edpb-g07-restate",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf",
+      "title": "EDPB Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.0 (PDF): point 112",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "the processing agreement should not merely restate the provisions of the GDPR: rather, it should include more specific, concrete information as to how the requirements will be met",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "edpb-g07-data-type",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf",
+      "title": "EDPB Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.0 (PDF): point 114",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "It would not be adequate merely to specify that it is “personal data pursuant to Article 4(1) GDPR” or “special categories of personal data pursuant to Article 9”.",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "edpb-g07-breach",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf",
+      "title": "EDPB Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.0 (PDF): point 136",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "it may be appropriate for the parties to include in the contract a specific timeframe (e.g. number of hours) by which the processor should notify the controller",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "edpb-g07-own-purposes",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf",
+      "title": "EDPB Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.0 (PDF): processor going beyond instructions (art. 28(10))",
+      "used_in": [
+        "reference.md#sources",
+        "SKILL.md#step-3-write-the-verdict-file"
+      ],
+      "quote": "A processor infringes the GDPR, however, if it goes beyond the controller’s instructions and starts to determine its own purposes and means of the processing.",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "edpb-g07-page",
+      "url": "https://www.edpb.europa.eu/our-work-tools/our-documents/guidelines/guidelines-072020-concepts-controller-and-processor-gdpr_en",
+      "title": "EDPB Guidelines 07/2020 landing page",
+      "used_in": [
+        "reference.md#sources"
+      ],
+      "quote": "Guidelines 07/2020 on the concepts of controller and processor in the GDPR Guideline 07 July 2021 Final version",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "cnil-guide-sous-traitant",
+      "url": "https://www.cnil.fr/sites/default/files/atoms/files/rgpd-guide_sous-traitant-cnil.pdf",
+      "title": "CNIL, Guide du sous-traitant, September 2017, with model clauses (PDF)",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "Le sous-traitant met à la disposition du responsable de traitement la documentation nécessaire pour démontrer le respect de toutes ses obligations et pour permettre la réalisation d'audits, y compris des inspections",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "cnil-guide-sous-traitant-page",
+      "url": "https://www.cnil.fr/fr/guide-sous-traitant",
+      "title": "CNIL, Guide du sous-traitant (HTML page)",
+      "used_in": [
+        "reference.md#sources"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    },
+    {
+      "id": "gdpr-eurlex",
+      "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+      "title": "GDPR, Regulation (EU) 2016/679, art. 28, 32 to 36 (EUR-Lex)",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items",
+        "SKILL.md#ground-rules"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    },
+    {
+      "id": "gdpr-cnil",
+      "url": "https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre4",
+      "title": "GDPR chapter IV as hosted by CNIL",
+      "used_in": [
+        "reference.md#sources"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "unread"
+    },
+    {
+      "id": "scc-decision-2021-914",
+      "url": "https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj",
+      "title": "Commission Implementing Decision (EU) 2021/914, standard contractual clauses (EUR-Lex)",
+      "used_in": [
+        "reference.md#sources",
+        "reference.md#items"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    }
+  ]
+}
