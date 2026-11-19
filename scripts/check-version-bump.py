@@ -7,6 +7,8 @@ Rules enforced:
   - when the diff from the merge base with <base-ref> to the working tree touches skills/,
     scripts/ or .claude-plugin/marketplace.json, metadata.version in the working tree must be
     a semver triple strictly greater than the one at <base-ref>
+  - a change limited to package.json / package-lock.json files (Renovate's dependency bumps)
+    needs no bump
   - other changes (docs, workflows) need no bump
 """
 from __future__ import annotations
@@ -18,6 +20,7 @@ from pathlib import Path
 
 MANIFEST = ".claude-plugin/marketplace.json"
 WATCHED = ("skills/", "scripts/", MANIFEST)
+DEP_MANIFESTS = ("package.json", "package-lock.json")
 
 
 def git(*args: str) -> str:
@@ -40,6 +43,9 @@ def main() -> int:
     changed = git("diff", "--name-only", git("merge-base", base, "HEAD").strip()).split()
     if not any(f.startswith(WATCHED) for f in changed):
         print("no change under skills/, scripts/ or the marketplace manifest; no bump required")
+        return 0
+    if all(Path(f).name in DEP_MANIFESTS for f in changed if f.startswith(WATCHED)):
+        print("only dependency manifests changed (package.json / package-lock.json); no bump required")
         return 0
     old = semver(json.loads(git("show", f"{base}:{MANIFEST}"))["metadata"]["version"], base)
     new = semver(json.loads(Path(MANIFEST).read_text())["metadata"]["version"], "HEAD")
