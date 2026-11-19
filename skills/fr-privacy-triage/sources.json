@@ -1,0 +1,100 @@
+{
+  "sources": [
+    {
+      "id": "csp-l1111-8",
+      "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049577902",
+      "title": "Article L1111-8 - Code de la santé publique",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "L'hébergeur de données mentionnées au premier alinéa du I sur support numérique est titulaire d'un certificat de conformité.",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "read"
+    },
+    {
+      "id": "csp-r1111-8-8",
+      "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000036656709",
+      "title": "Article R1111-8-8 - Code de la santé publique",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "le fait de se voir confier des données pour une courte période",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "read"
+    },
+    {
+      "id": "cnil-deliberation-2018-327",
+      "url": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000037559521",
+      "title": "Délibération n° 2018-327 du 11 octobre 2018 (liste des traitements soumis à AIPD)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "Délibération n° 2018-327 du 11 octobre 2018 portant adoption de la liste des types d'opérations de traitement",
+      "retrieved": "2026-11-19",
+      "method": "webfetch",
+      "status": "read"
+    },
+    {
+      "id": "cnil-guide-sous-traitant",
+      "url": "https://www.cnil.fr/sites/default/files/atoms/files/rgpd-guide_sous-traitant-cnil.pdf",
+      "title": "CNIL - RGPD, guide du sous-traitant (édition septembre 2017)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "des garanties suffisantes quant à la mise en œuvre de mesures techniques et organisationnelles appropriées de manière à ce que le traitement réponde aux exigences du présent règlement et garantisse la protection des droits de la personne concernée » (article 28 du règlement européen)",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "cnil-guide-securite-2024",
+      "url": "https://www.cnil.fr/sites/default/files/2024-03/cnil_guide_securite_personnelle_2024.pdf",
+      "title": "CNIL - Guide pratique RGPD, sécurité des données personnelles (version 2024)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "L’objectif de ce guide est d’accompagner les organismes dans la mise en place de mesures de sécurité pour assurer la protection des données personnelles qu’ils traitent.",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "read"
+    },
+    {
+      "id": "cnil-rgpd-chapitre2",
+      "url": "https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2",
+      "title": "CNIL - RGPD, chapitre II (articles 5 à 11, dont l'article 9)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    },
+    {
+      "id": "cnil-rgpd-chapitre4",
+      "url": "https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre4",
+      "title": "CNIL - RGPD, chapitre IV (articles 24 à 43, dont les articles 28 et 35)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    },
+    {
+      "id": "esante-hds",
+      "url": "https://esante.gouv.fr/produits-services/hds",
+      "title": "Agence du numérique en santé - Hébergement de données de santé (HDS)",
+      "used_in": [
+        "reference.md#stable-official-urls"
+      ],
+      "quote": "",
+      "retrieved": "2026-11-19",
+      "method": "curl",
+      "status": "unread"
+    }
+  ]
+}
