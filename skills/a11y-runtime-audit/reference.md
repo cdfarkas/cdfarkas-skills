@@ -121,4 +121,3 @@ When WCAG, the APG or axe-core change:
    (`button-name`, `color-contrast`, `target-size`), so a renamed or retagged rule fails the eval
    instead of silently disappearing.
 4. Re-fetch every page in [sources.md](sources.md) and update its version and date.
-5. Bump `metadata.version` in `.claude-plugin/marketplace.json`.

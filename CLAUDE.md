@@ -22,10 +22,9 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
 4. **Run the CI locally** (`python3 scripts/validate-skills.py`,
    `python3 scripts/validate-evals.py`, `python3 scripts/check-docs-sync.py origin/main`,
    `bash -n` on every `.sh`, the personal-path grep) before committing; the `windows`
-   job in `.github/workflows/ci.yml` needs a PR to run, so open one. Any PR touching
-   `skills/`, `scripts/` or the marketplace manifest bumps `metadata.version` in
-   `.claude-plugin/marketplace.json` (semver; CI refuses the PR otherwise; a change to
-   `package.json` / `package-lock.json` files alone is exempt). A script
+   job in `.github/workflows/ci.yml` needs a PR to run, so open one. Plugins carry no
+   `version` field and Claude Code tracks them by commit SHA, so no version bump is needed
+   (never add a `version` field to an entry: it would pin users until bumped). A script
    that pushes, edits a PR or calls a write endpoint takes `--dry-run`
    (`validate-skills.py` refuses it otherwise; rule 4 of the docs says why).
 5. **Docs follow the code.** Any change to a skill's `scripts/`, `hooks/`, `agents/` or

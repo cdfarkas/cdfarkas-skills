@@ -34,10 +34,6 @@ jobs:
       - name: Evals, graders and published results agree
         run: python3 scripts/validate-evals.py
 
-      - name: Marketplace version bumped
-        if: github.event_name == 'pull_request'
-        run: python3 scripts/check-version-bump.py "origin/${{ github.base_ref }}"
-
       - name: Docs follow the code
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
