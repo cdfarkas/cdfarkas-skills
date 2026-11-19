@@ -37,12 +37,13 @@
       "id": 2,
       "name": "provider-training",
       "prompt": "on doit accepter le DPA de notre fournisseur d'IA pour utiliser son API, est-ce qu'on peut signer ? skills/dpa-review/evals/fixtures/provider-dpa-training.md",
-      "expected_output": "The rendered table with the training clause flagged RISK, the US transfer and its mechanism named, audits weak or missing, and no sign / do-not-sign verdict.",
+      "expected_output": "The rendered table with the training clause flagged RISK, the US transfer and its mechanism named, a check of the Data Privacy Framework list for the US recipient, audits weak or missing, and no sign / do-not-sign verdict.",
       "assertions": [
         "Every art. 28(3) letter (a) to (h) has its own table row",
         "Every row uses a status from the fixed vocabulary",
         "The training row is RISK and quotes the training clause",
         "The transfers row names the destination or the mechanism",
+        "The transfers row or the questions raise the Data Privacy Framework list check for the US transfer",
         "The audits row 28(3)(h) is WEAK or MISSING",
         "No compliant / conforme / safe-to-sign verdict",
         "A questions-for-a-lawyer section with at least one numbered question"

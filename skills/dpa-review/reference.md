@@ -10,6 +10,9 @@ Every item below rests on one of these, read on the date given. The machine-read
 | EDPB Guidelines 07/2020 on the concepts of controller and processor in the GDPR, version 2.0, adopted 7 July 2021 | <https://www.edpb.europa.eu/our-work-tools/our-documents/guidelines/guidelines-072020-concepts-controller-and-processor-gdpr_en> (PDF: <https://www.edpb.europa.eu/system/files/documents/2023-10/EDPB_guidelines_202007_controllerprocessor_final_en.pdf>) | 2026-11-19: Part II §1.3 (content of the contract, points 114 to 136, 1.3.1 to 1.3.8), §1.5 (art. 28(10)), §1.6 (sub-processors) |
 | CNIL, *Guide du sous-traitant*, édition septembre 2017, with its *Exemple de clauses contractuelles de sous-traitance* | <https://www.cnil.fr/sites/default/files/atoms/files/rgpd-guide_sous-traitant-cnil.pdf> | 2026-11-19 (the HTML page <https://www.cnil.fr/fr/guide-sous-traitant> answered HTTP 503) |
 | Commission Implementing Decision (EU) 2021/914 (standard contractual clauses for transfers to third countries) | <https://eur-lex.europa.eu/eli/dec_impl/2021/914/oj> | **not read** (same EUR-Lex challenge; no non-EUR-Lex official copy was found). Named only as a mechanism to look for; the skill never assesses the clauses themselves |
+| Commission Implementing Decision (EU) 2023/1795 (adequacy decision for the EU-US Data Privacy Framework) | <https://eur-lex.europa.eu/eli/dec_impl/2023/1795/oj> | **not read** (EUR-Lex answered HTTP 202 with an empty body on 2026-11-19). Its effect is taken from the Commission page below, which links to it |
+| European Commission, *EU-US data transfers* | <https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/eu-us-data-transfers_en> | 2026-11-19: data flows under the adequacy decision to US companies that participate in the Data Privacy Framework; standard contractual clauses and binding corporate rules stay usable |
+| Data Privacy Framework List and Program Overview (US Department of Commerce) | <https://www.dataprivacyframework.gov/list>, <https://www.dataprivacyframework.gov/Program-Overview> | **not read**: on 2026-11-19 both answered with a JavaScript application shell and no text, to `curl` and to a web-fetch tool. The skill only points the user to the list; it never says whether a company is on it |
 
 Points the review relies on, from the EDPB guidelines:
 
@@ -22,6 +25,11 @@ Points the review relies on, from the EDPB guidelines:
   133): a clause that only paraphrases art. 28 is **WEAK**, not PRESENT.
 - The processor notifies the controller of a breach without undue delay; a timeframe in
   hours, a contact point and the minimum content may be set in the contract (point 136).
+- Transfers to the United States, from the Commission page: personal data "can flow freely
+  from the EU to companies in the United States that participate in the Data Privacy
+  Framework", and the safeguards also facilitate "other tools, such as standard contractual
+  clauses and binding corporate rules". Whether a recipient participates is read on the
+  official DPF list, never inferred from the contract.
 - A processor that processes the data for its own purposes is a controller for that
   processing and infringes the GDPR (art. 28(10), §1.5): service improvement or model
   training on customer data is a **RISK** row, always.
@@ -52,7 +60,7 @@ limits the risk) or `SILENT` (the contract says nothing).
 | `28(3)(g)` | at the controller's choice, deletion or return at the end, and deletion of copies | deletion with no deadline, or return only |
 | `28(3)(h)` | information to demonstrate compliance, and audits including inspections by the controller or its mandated auditor | a certificate offered in place of any audit |
 | `28(3)-unlawful-instruction` | the processor informs the controller when an instruction infringes data protection law | absent |
-| `transfers` | transfers outside the EU/EEA named, with their mechanism (adequacy, standard contractual clauses, binding corporate rules) | transfers allowed "anywhere the processor operates" |
+| `transfers` | transfers outside the EU/EEA named, with their mechanism (adequacy, standard contractual clauses, binding corporate rules). A transfer to the United States (a US provider or sub-processor, or data processed there) always gets a check in the last column: is the recipient listed as active on the Data Privacy Framework List (<https://www.dataprivacyframework.gov/list>); if not, which other art. 46 mechanism (e.g. standard contractual clauses) does the contract name. A check, never a conclusion | transfers allowed "anywhere the processor operates" |
 | `training` | customer data is not used for the processor's own purposes (model training, service improvement, analytics) | — any such use is `RISK` |
 | `retention` | retention by the processor bounded, backups included | backups kept indefinitely |
 | `breach-delay` | a breach notification delay to the controller, ideally in hours, with a contact point | "without undue delay" only, or a delay above 72 hours |
@@ -86,7 +94,7 @@ alone. A match is a candidate, never a verdict: the agent reads it and decides.
 28(3)(g) :: mandatory :: Deletion or return at the end :: Suppression ou restitution en fin de contrat :: delet|suppr|efface|return (all |the )*(personal )?data|restitu|renvoyer|destroy|d(e|é)trui|end of (the )?(provision|services|agreement|contract)|fin (du contrat|de la prestation|des services|du pr(e|é)sent)|termination
 28(3)(h) :: mandatory :: Audits and inspections :: Audits et inspections :: audit|inspection|demonstrate compliance|d(e|é)montrer le respect|documentation n(e|é)cessaire|information necessary to demonstrate
 28(3)-unlawful-instruction :: mandatory :: Infringing instruction flagged :: Instruction contraire signalée :: infring|enfrein|constituer? une violation|contrary to (the )?(gdpr|law|data protection)|contraire (au|à la|aux)|immediately inform|informe imm(e|é)diatement
-transfers :: risk :: Transfers outside the EU :: Transferts hors UE :: transfer|transfert|third countr|pays tiers|outside (of )?(the )?(eu|eea|european)|hors (de l'|de l)?(ue|union|eee|espace)|standard contractual clauses|clauses contractuelles types|adequacy|ad(e|é)quation|binding corporate|data privacy framework
+transfers :: risk :: Transfers outside the EU :: Transferts hors UE :: transfer|transfert|third countr|pays tiers|outside (of )?(the )?(eu|eea|european)|hors (de l'|de l)?(ue|union|eee|espace)|standard contractual clauses|clauses contractuelles types|adequacy|ad(e|é)quation|binding corporate|data privacy framework|united states|tats-unis|u\.s\.|(^|[^a-z])usa([^a-z]|$)
 training :: risk :: Use for training or service improvement :: Usage pour entraînement ou amélioration :: train|entra(i|î)n|improv|am(e|é)lior|own purposes|propres fins|propre compte|machine learning|apprentissage|models?|mod(e|è)les?|anonymi|aggregat|agr(e|é)g|de-identif|analytics|statisti
 retention :: risk :: Retention by the processor :: Conservation par le sous-traitant :: retain|retention|retenti|conserv|archiv|backups?|sauvegardes?|logs? (are|is) (kept|stored)|journaux
 breach-delay :: risk :: Breach notification delay :: Délai de notification des violations :: breach|violation|incident|hours|heures|without undue delay|meilleurs d(e|é)lais|72

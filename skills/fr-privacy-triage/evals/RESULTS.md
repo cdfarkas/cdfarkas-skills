@@ -146,6 +146,23 @@ leave only OPEN rows.
 
 Not measured: robustness over repeated runs. Each cell is one run.
 
+## Changed since the runs: reworded questions
+
+After run 2, `ask` gained a ranking of the listed questions closest to the one it files
+(`candidate:` lines, advisory, never blocking) and the skill a `drop` command: the agent
+judges by meaning whether a candidate is the same question and, if so, drops the item it
+just filed and cites the candidate (rule in `reference.md`, "Deduplication"). Exact
+duplicates are still refused as before. No case was re-run.
+
+- No prompt files a question that is already listed: in `evals.json` the `no-docs` and
+  `feature-spec` cases start with no question list, and the `with-log` fixture's list has an
+  empty `## Added later`. So no case targets this change and none measures it.
+- The scores above should hold: the question-list assertions need one item (or one about
+  the DPIA, or the cloud provider) and `ask` still writes it. They would drop only if the
+  agent wrongly judged a needed question a duplicate of another one filed in the same run
+  and dropped it. Not verified: the run 2 answers and question lists are not published and
+  were not re-read for this change.
+
 ## Reproducing
 
 ```bash

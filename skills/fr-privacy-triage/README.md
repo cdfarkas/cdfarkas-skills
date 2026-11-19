@@ -30,13 +30,18 @@ the project, created from a template on first use.
 bash scripts/fr-privacy-triage.sh init
 bash scripts/fr-privacy-triage.sh search retention conservation
 bash scripts/fr-privacy-triage.sh ask --question "..." --why "..." --blocks "..." [--dry-run]
+bash scripts/fr-privacy-triage.sh drop --question "..." [--dry-run]
 bash scripts/fr-privacy-triage.sh log --question "..." --answer "..." --conditions "..." \
   --validated-by "DPO" --date 2026-03-12 --source "..." [--dry-run]
 printf 'point\tOPEN\tlawyer-questions: ...\n' | bash scripts/fr-privacy-triage.sh table
 ```
 
 Defaults: `docs/legal-decisions.md` and `docs/lawyer-questions.md` under the git root;
-`--root`, `--log` and `--questions` override them. Needs `bash` and `awk`. The official-page
+`--root`, `--log` and `--questions` override them. Needs `bash` and `awk`. `ask` refuses an
+exact duplicate (`duplicate:`); otherwise it files the question and lists up to three
+listed questions that share the most words with it (`candidate:`). Whether one is the same
+question reworded (synonyms included) is the agent's call, by meaning; if it is, `drop`
+removes the item just filed. The official-page
 lookup is done by the agent with its web tools. [`sources.json`](sources.json) lists the official pages the
 skill relies on, each with the excerpt it rests on, so a scheduled job can detect a change. Commands, output lines, the dedup rule and
 failure messages: [`reference.md`](reference.md).
