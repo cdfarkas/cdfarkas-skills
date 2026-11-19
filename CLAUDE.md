@@ -28,7 +28,9 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
    that pushes, edits a PR or calls a write endpoint takes `--dry-run`
    (`validate-skills.py` refuses it otherwise; rule 4 of the docs says why).
 5. **Docs follow the code.** Any change to a skill's `scripts/`, `hooks/`, `agents/` or
-   `SKILL.md` updates its `README.md` or `reference.md` in the same PR; a change to
+   `SKILL.md` updates its `README.md` or `reference.md` in the same PR (a
+   `package-lock.json` change, or a `package.json` change confined to its dependency
+   maps, excepted); a change to
    `scripts/*.py` or `.github/workflows/ci.yml` (a bump of an action's version alone
    excepted) updates this file or
    `docs/how-these-skills-are-built.md`; a plugin added to or removed from the
