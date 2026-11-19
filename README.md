@@ -26,6 +26,7 @@ evaluation is published as it happened, including the runs that failed or did no
 | [`front-review`](skills/front-review/) | A front-end code review for any React/TS/CSS stack, tuned per repo by a `REVIEW.md` overlay read from the base branch: mechanical candidates that cannot be dropped, judgement rules on top, every finding verified, a fix list with a verdict | `git`; `gh` for a PR |
 | [`intake`](skills/intake/) | A front door for any new need before designing: project facts from a script, an interview on what the code cannot answer, a ledger that verifies every load-bearing claim, then a one-screen brief attacked by a devil's advocate and gated on your yes | `bash`; `git`, `node` optional |
 | [`a11y-runtime-audit`](skills/a11y-runtime-audit/) | An accessibility audit of the rendered page (dev server or Storybook story) in headless Chromium: axe-core for WCAG 2.2 A/AA plus a keyboard Tab walk, popups closed with Escape, reflow at 320 px, text spacing and reduced motion, each finding with its success criterion, severity and repro step | `node`, `npm` |
+| [`fr-privacy-triage`](skills/fr-privacy-triage/) | Triage a French data-protection question (CNIL, RGPD, HDS, DPIA, providers, a new data flow) without a legal answer: each point SETTLED from the project's log of validated decisions, OFFICIAL from a cited official page, or OPEN and filed once for a lawyer or DPO, ending with a classification table | `bash`, `awk` |
 
 Each folder has its own README with usage, output and evaluation results.
 
@@ -40,6 +41,7 @@ Each folder has its own README with usage, output and evaluation results.
 | `front-review` | 7/7, 6/6, 7/7 (3 runs, identical) | 3/7, 5/6, 3/7 to 6/7 (3 runs) | 287 s and 138k with, 152 s and 112k without | [RESULTS.md](skills/front-review/evals/RESULTS.md) |
 | `intake` | 8/9, 10/10, 9/9, 6/6 | 6/9, 3/10, 7/9, 3/6 | 149 s and 524k with, 94 s and 420k without | [RESULTS.md](skills/intake/evals/RESULTS.md) |
 | `a11y-runtime-audit` | 8/8, 5/5, 5/5 | 4/8, 2/5, 5/5 | 40 s and 77k with, 71 s and 76k without | [RESULTS.md](skills/a11y-runtime-audit/evals/RESULTS.md) |
+| `fr-privacy-triage` | 7/7, 7/7, 7/7, 6/6, 7/7 (run 2; run 1: 6/7, 7/7, 7/7, 6/6, 7/7) | 3/7, 3/7, 3/7, 4/6, 4/7 (run 2; run 1: 3/7, 2/7, 3/7, 3/6, 4/7) | not measured; one run per case, skill and grader changed between runs, both arms loaded the author's user configuration | [RESULTS.md](skills/fr-privacy-triage/evals/RESULTS.md) |
 
 Three prompts per skill, each run once with the skill and once without, in isolated
 sessions (`front-review`: 3 runs per arm; `intake`: four multi-turn prompts). `not measured` means the run aborted (an API rate
@@ -71,6 +73,7 @@ PR to-do · @you · your-org · 2026-09-10 · 12
 /plugin install front-review@cdfarkas-skills
 /plugin install intake@cdfarkas-skills
 /plugin install a11y-runtime-audit@cdfarkas-skills
+/plugin install fr-privacy-triage@cdfarkas-skills
 ```
 
 Or copy a skill folder into `~/.claude/skills/` (or your agent's equivalent).
