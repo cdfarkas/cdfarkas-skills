@@ -31,6 +31,9 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq jq
           for f in $(find skills -name '*.jq'); do jq -n -f "$f" </dev/null >/dev/null 2>&1 || jq --version >/dev/null; done
 
+      - name: Source checker self-test
+        run: python3 scripts/check-sources.py --self-test
+
       - name: Evals, graders and published results agree
         run: python3 scripts/validate-evals.py
 
