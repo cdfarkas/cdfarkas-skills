@@ -1,0 +1,85 @@
+{
+  "skill_name": "fr-privacy-triage",
+  "notes": "Each case runs in a fresh copy of its fixture, made a git repository (git init) so the skill finds the root. After the run, save the answer as <run-dir>/<name>.md and copy the project's docs/lawyer-questions.md, if it exists, to <run-dir>/<name>.questions.md. Grade with: python3 grade.py <run-dir>. The with-log fixture's decision log holds one complete entry dated 2026-03-12 whose Conditions say transcription is local and no provider is involved.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "llm-api-child-reports",
+      "prompt": "est-ce que je peux utiliser l'API Claude pour rédiger des comptes rendus sur des enfants handicapés ?",
+      "files": ["evals/fixtures/no-docs"],
+      "expected_output": "Points split and classified; health data and provider questions left OPEN and filed; official pages cited with URL and date; no verdict; has the classification table.",
+      "assertions": [
+        "No compliant / conforme verdict anywhere in the answer",
+        "The answer has the Point | Classification | Reference table (trailing notes allowed), every row classified SETTLED, OFFICIAL or OPEN",
+        "At least one row is OPEN",
+        "At least one row is OFFICIAL, and every OFFICIAL row carries an official-domain https URL and a date",
+        "The question list exists and has at least one item under ## Added later",
+        "The answer names health data (données de santé) or HDS",
+        "No row is SETTLED: the project has no decision log"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "dpia-feature",
+      "prompt": "do I need a DPIA for this feature? docs/feature-voice-summary.md",
+      "files": ["evals/fixtures/feature-spec"],
+      "expected_output": "The feature checklist walked through, the DPIA need left OPEN and filed, no conclusion on whether a DPIA is required, the table at the end.",
+      "assertions": [
+        "No compliant / conforme verdict anywhere in the answer",
+        "The answer has the Point | Classification | Reference table (trailing notes allowed), every row classified SETTLED, OFFICIAL or OPEN",
+        "A row about the DPIA / AIPD is OPEN",
+        "No sentence concludes that a DPIA is or is not required",
+        "The checklist is covered: retention, the provider's DPA or processor terms, transfers outside the EU",
+        "The question list has an item under ## Added later about the DPIA / AIPD",
+        "Every OFFICIAL row, if any, carries an official-domain https URL and a date"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "voice-notes-local-pc",
+      "prompt": "on peut stocker les notes vocales sur mon PC ?",
+      "files": ["evals/fixtures/no-docs"],
+      "expected_output": "In French: storage, health-data and security points split; official CNIL / ANS pages cited; the qualification left OPEN and filed; the table at the end.",
+      "assertions": [
+        "No compliant / conforme verdict anywhere in the answer",
+        "The answer has the Point | Classification | Reference table (trailing notes allowed), every row classified SETTLED, OFFICIAL or OPEN",
+        "At least one row is OPEN",
+        "At least one row is OFFICIAL, and every OFFICIAL row carries an official-domain https URL and a date",
+        "The question list exists and has at least one item under ## Added later",
+        "The answer names health data (données de santé) or HDS",
+        "The answer is in French"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "settled-by-log",
+      "prompt": "how long can we keep the session audio files once they're transcribed? same setup as before, still transcribing locally on my laptop, nothing changed",
+      "files": ["evals/fixtures/with-log"],
+      "expected_output": "The decision-log entry cited as SETTLED with its date and answer; nothing filed for a settled point; the table at the end.",
+      "assertions": [
+        "No compliant / conforme verdict anywhere in the answer",
+        "The answer has the Point | Classification | Reference table (trailing notes allowed), every row classified SETTLED, OFFICIAL or OPEN",
+        "A SETTLED row cites the decision-log entry date 2026-03-12",
+        "The answer gives the entry's answer: 30 days",
+        "The answer names the entry it relies on (Audio retention after transcription)",
+        "No retention question was appended to the question list"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "conditions-differ",
+      "prompt": "on veut maintenant envoyer les audios à une API de transcription dans le cloud au lieu de transcrire en local, la décision sur la conservation des audios tient toujours ?",
+      "files": ["evals/fixtures/with-log"],
+      "expected_output": "The entry found and cited with its date, the changed Condition named, the point reclassified OPEN and filed, no SETTLED row, the table at the end.",
+      "assertions": [
+        "No compliant / conforme verdict anywhere in the answer",
+        "The answer has the Point | Classification | Reference table (trailing notes allowed), every row classified SETTLED, OFFICIAL or OPEN",
+        "The answer cites the decision-log entry date 2026-03-12",
+        "The answer says the entry's conditions no longer match (transcription leaves the laptop / a provider is now involved)",
+        "No row is SETTLED: the entry's Conditions no longer hold",
+        "At least one row is OPEN",
+        "The question list has an item under ## Added later about the cloud transcription provider"
+      ]
+    }
+  ]
+}
