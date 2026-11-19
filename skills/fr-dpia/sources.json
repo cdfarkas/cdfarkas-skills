@@ -1,0 +1,144 @@
+{
+ "sources": [
+  {
+   "id": "cnil-2018-327",
+   "url": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000037559521",
+   "title": "CNIL deliberation 2018-327 (list of processing requiring a DPIA)",
+   "used_in": [
+    "reference.md#cnil-list-deliberation-2018-327",
+    "reference.md#sources"
+   ],
+   "quote": "Cette liste a un caractère non-exhaustif.",
+   "retrieved": "2026-11-19",
+   "method": "webfetch",
+   "status": "read"
+  },
+  {
+   "id": "cnil-2018-326",
+   "url": "https://www.legifrance.gouv.fr/jorf/article_jo/JORFARTI000037559519",
+   "title": "CNIL deliberation 2018-326 (guidelines on DPIAs)",
+   "used_in": [
+    "reference.md#criteria",
+    "reference.md#verdict",
+    "reference.md#sources"
+   ],
+   "quote": "qu'un traitement qui rencontre au moins deux des critères mentionnés ci-dessus doit faire l'objet d'une AIPD.",
+   "retrieved": "2026-11-19",
+   "method": "webfetch",
+   "status": "read"
+  },
+  {
+   "id": "edpb-endorsed-wp29",
+   "url": "https://www.edpb.europa.eu/our-work-tools/general-guidance/endorsed-wp29-guidelines_en",
+   "title": "EDPB, endorsed WP29 guidelines",
+   "used_in": [
+    "reference.md#sources"
+   ],
+   "quote": "Guidelines on Data Protection Impact Assessment (DPIA) and determining whether processing is \"likely to result in a high risk\" for the purposes of Regulation 2016/679, WP248 rev.01",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "edpb-endorsement-1-2018",
+   "url": "https://www.edpb.europa.eu/sites/default/files/files/news/endorsement_of_wp29_documents_en_0.pdf",
+   "title": "EDPB Endorsement 1/2018",
+   "used_in": [
+    "reference.md#sources"
+   ],
+   "quote": "Without prejudice to any future revision as appropriate, it endorses the Article 29 Working Party documents as following:",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "wp248-rev01",
+   "url": "https://ec.europa.eu/newsroom/article29/redirection/document/47711",
+   "title": "WP248 rev.01, DPIA guidelines",
+   "used_in": [
+    "reference.md#criteria",
+    "reference.md#verdict",
+    "reference.md#prior-consultation-art-36"
+   ],
+   "quote": "In most cases, a data controller can consider that a processing meeting two criteria would require a DPIA to be carried out.",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "cnil-pia-methode",
+   "url": "https://www.cnil.fr/sites/cnil/files/atoms/files/cnil-pia-1-fr-methode.pdf",
+   "title": "CNIL, PIA, la méthode (2018)",
+   "used_in": [
+    "reference.md#draft-structure",
+    "reference.md#scales"
+   ],
+   "quote": "événement redouté (un accès illégitime à des données18, une modification non désirée de données19, et une disparition de données20)",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "cnil-pia-bases",
+   "url": "https://www.cnil.fr/sites/cnil/files/atoms/files/cnil-pia-3-fr-basesdeconnaissances.pdf",
+   "title": "CNIL, PIA, les bases de connaissances (2018)",
+   "used_in": [
+    "reference.md#scales",
+    "reference.md#map-position-not-a-risk-level"
+   ],
+   "quote": "La gravité représente l’ampleur d’un risque. Elle est essentiellement estimée au regard de la hauteur des impacts potentiels sur les personnes concernées",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "cnil-pia-modeles",
+   "url": "https://www.cnil.fr/sites/cnil/files/atoms/files/cnil-pia-2-fr-modeles.pdf",
+   "title": "CNIL, PIA, les modèles (2018)",
+   "used_in": [
+    "reference.md#draft-structure"
+   ],
+   "quote": "Élaboration de la cartographie des risques liés à la sécurité des données",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "read"
+  },
+  {
+   "id": "gdpr-eurlex",
+   "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
+   "title": "GDPR on EUR-Lex (articles 35 and 36)",
+   "used_in": [
+    "reference.md#prior-consultation-art-36",
+    "reference.md#sources"
+   ],
+   "quote": "",
+   "retrieved": "2026-11-19",
+   "method": "curl",
+   "status": "unread"
+  },
+  {
+   "id": "gdpr-cnil-text",
+   "url": "https://www.cnil.fr/fr/reglement-europeen-protection-donnees",
+   "title": "GDPR text hosted by CNIL (articles 35 and 36)",
+   "used_in": [
+    "reference.md#sources"
+   ],
+   "quote": "",
+   "retrieved": "2026-11-19",
+   "method": "webfetch",
+   "status": "unread"
+  },
+  {
+   "id": "cnil-aipd-exemption-list",
+   "url": "https://www.cnil.fr/fr/listes-des-traitements-pour-lesquels-une-aipd-nest-pas-requise",
+   "title": "CNIL list of processing exempt from a DPIA (deliberation 2019-118)",
+   "used_in": [
+    "reference.md#verdict"
+   ],
+   "quote": "",
+   "retrieved": "2026-11-19",
+   "method": "webfetch",
+   "status": "unread"
+  }
+ ]
+}

@@ -1,0 +1,50 @@
+{
+  "skill_name": "fr-dpia",
+  "notes": "No placeholders to substitute. Each prompt runs with no project checked out, so every fact beyond the prompt is unknown and should stay a TODO. After each run the harness saves the answer as <run-dir>/<case>.md and copies the draft the agent saved, docs/dpia/*.md (answers files excluded), to <run-dir>/<case>.draft.md; for an arm that saved its draft elsewhere in the case repo, it copies that .md instead. grade.py reads the draft only for the draft-content assertions.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "fr-children-reports",
+      "prompt": "est-ce que je dois faire une AIPD pour une appli qui stocke des comptes rendus sur des enfants ?",
+      "expected_output": "The check output: the criteria with the count out of 9, children as vulnerable data subjects, the CNIL list consulted, a required or likely verdict ending with the DPO confirmation, the unknown criteria left as questions.",
+      "assertions": [
+        "The criteria count out of nine is given (N/9)",
+        "The vulnerable data subjects criterion is named",
+        "The CNIL list, deliberation 2018-327, is consulted",
+        "The verdict is required or likely, never 'not needed'",
+        "A line sends the verdict to the DPO for confirmation",
+        "Nothing is claimed validated or compliant",
+        "Unknown facts are left as TODO questions"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "en-hr-analytics",
+      "prompt": "draft a DPIA for our HR analytics tool",
+      "expected_output": "A draft in the CNIL PIA structure: the requirement check, context, principles, the three feared events on the CNIL scales, an action plan, the art. 36 question for the DPO, every unsupplied fact as a TODO.",
+      "assertions": [
+        "The criteria count out of nine is given (N/9)",
+        "The CNIL list, deliberation 2018-327, is consulted",
+        "The CNIL severity scale labels are used (Négligeable, Limitée, Importante, Maximale)",
+        "The three feared events are each assessed (illegitimate access, unwanted modification, disappearance)",
+        "At least five unsupplied facts are TODO markers",
+        "Prior consultation (art. 36) is put to the DPO as a question",
+        "A line sends the verdict to the DPO for confirmation",
+        "Nothing is claimed validated or compliant"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "en-newsletter-no-dpia",
+      "prompt": "do we need a DPIA for the newsletter signup form on our marketing site? it only stores an email address and the signup date, nothing else",
+      "expected_output": "The check output: the criteria count, a 'not indicated' verdict ending with the DPO confirmation, no DPIA draft.",
+      "assertions": [
+        "The criteria count out of nine is given (N/9)",
+        "The verdict is that a DPIA is not indicated or not required",
+        "A line sends the verdict to the DPO for confirmation",
+        "No DPIA draft is produced for a case that does not need one",
+        "Nothing is claimed validated or compliant"
+      ]
+    }
+  ]
+}
