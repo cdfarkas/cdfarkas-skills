@@ -82,6 +82,15 @@
       "skills": ["./skills/dpa-review"],
       "category": "compliance",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/dpa-review"
+    },
+    {
+      "name": "fr-privacy-triage",
+      "description": "Triage a French data-protection question (CNIL, RGPD/GDPR, HDS, DPIA, consent, retention, processors, LLM or hosting provider, a new feature or data flow) for any project without giving a legal answer: each point SETTLED from the project's log of professionally validated decisions, OFFICIAL from a cited official page, or OPEN and filed once in the project's question list for a lawyer or DPO, ending with a classification table.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/fr-privacy-triage"],
+      "category": "compliance",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/fr-privacy-triage"
     }
   ]
 }
