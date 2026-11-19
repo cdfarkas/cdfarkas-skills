@@ -91,6 +91,15 @@
       "skills": ["./skills/fr-privacy-triage"],
       "category": "compliance",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/fr-privacy-triage"
+    },
+    {
+      "name": "fr-dpia",
+      "description": "Decide whether a French AIPD / GDPR DPIA (art. 35) is required against the nine EDPB WP248 criteria and the CNIL list (deliberation 2018-327), then draft it in the CNIL PIA structure: context, principles, the three risks on the CNIL four-level scales, action plan and the art. 36 question for the DPO. Unknown facts stay TODO questions; nothing is presented as validated.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/fr-dpia"],
+      "category": "compliance",
+      "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/fr-dpia"
     }
   ]
 }
