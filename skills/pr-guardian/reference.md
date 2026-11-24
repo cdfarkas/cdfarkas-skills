@@ -21,7 +21,7 @@ One entry per repo+branch that is not `done`:
 | `repo`, `branch` | `owner/name` and the branch ref |
 | `worktree` | the checkout the guardian writes in (`--worktree`, empty when unknown) |
 | `agent` | the handle the Agent tool returned, recorded with `set --agent`; empty shows as `UNREGISTERED` in `list` |
-| `session_id` | the session that registered or refreshed the entry |
+| `session_id` | the session that owns the entry: the last one `register` was given with `--session` |
 | `pr` | PR number as a string, empty until `set --pr` |
 | `last_sha` | the HEAD the guardian last read |
 | `status` | `live` — a guardian is on it · `orphaned` — its session ended before the PR was confirmed green (`orphaned_at` set) · `done` — PR merged or guardian finished; hidden from `get` and `list` |
@@ -33,7 +33,13 @@ One entry per repo+branch that is not `done`:
 without writing it; `list --session <id>` hides entries owned by other sessions.
 
 `register` on an existing repo+branch refreshes it (status back to `live`, `pushes` + 1,
-the fields passed) and prints the same id. `done` marks every non-done entry for the
+the fields passed) and prints the same id. Without `--agent`, the recorded handle is
+emptied when the entry was not `live` or belonged to another session: that guardian cannot
+be reached. `watch` passes `--session "${CLAUDE_CODE_SESSION_ID:?}"`, the
+[variable](https://code.claude.com/docs/en/env-vars) Claude Code sets to the current session
+id in the Bash tool; the command stops before registering when it is empty.
+
+`done` marks every non-done entry for the
 repo+branch `done` and releases the lock. `prune [--max-age-days N]` (default 7) drops
 `done` entries, entries whose id epoch is older than N days, and lock directories older
 than N days.
@@ -93,7 +99,7 @@ the scripts are in `hooks/`.
 |---|---|---|
 | `PreToolUse` on `Bash` | `lock-guard.sh` | When the command is a real `git commit` or `git push` (heredoc bodies and quoted strings ignored; `git -C <path>`, `cd <path> &&` and `env` prefixes resolved) on a repository whose owner passes `orgs`, and the branch's lock is held by someone other than the `PR_GUARDIAN=` caller: returns `{"decision": "block", "reason": …}` naming the holder, the agent to message, and the `locked` / `release` commands. Anything unexpected exits 0. |
 | `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, on a branch under one of the `branch_prefixes` of a repository passing `orgs` (never the default branch recorded in `origin/HEAD`, and never a branch without a `/`): `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
-| `SessionStart` | `adopt.sh` | Runs `doctor`; on a `FAIL` injects one warning line (`[pr-guardian] prerequisite missing — …`). Then `prune`, and for the 3 most recent entries of other sessions that are `orphaned` or untouched for 45 minutes: a PR that is `MERGED` or `CLOSED` is marked `done`; a mergeable PR with no failing or pending check gets a note and is left alone; anything else has its lock released and is listed under `# Orphaned PR guardians (adopt these)` with worktree, guardian id and last HEAD. |
+| `SessionStart` | `adopt.sh` | Runs `doctor`; on a `FAIL` injects one warning line (`[pr-guardian] prerequisite missing — …`). Then `prune`, and for the 3 most recent entries of other sessions that are `orphaned` or untouched for 45 minutes: a PR that is `MERGED` or `CLOSED` is marked `done`; a mergeable PR with no failing or pending check gets a note and is left alone; anything else has its lock released and is listed under `# Orphaned PR guardians (adopt these)` with worktree, guardian id, last HEAD and the `register … --session <this session>` command to run right before its dispatch. The hook registers nothing itself. |
 | `SessionEnd` | `session-end.sh` | For every `live` entry of the ending session: release its lock, `set --orphan` with a note, and on macOS post a notification. Other sessions' entries are never touched. |
 
 ## `plan` output

@@ -18,6 +18,7 @@ with_timeout() {
   elif command -v gtimeout >/dev/null 2>&1; then gtimeout "$@"
   else shift; "$@"; fi
 }
+quote() { printf '%s' "$1" | jq -Rrs @sh; }
 emit() { printf '%s' "$1" | jq -Rs '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: .}}'; exit 0; }
 
 [[ -r "$HELPER" ]] || quiet_exit
@@ -25,6 +26,8 @@ command -v jq >/dev/null 2>&1 || quiet_exit
 
 input=$(cat)
 session=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
+owner=$(quote "$session")
+[[ -z "$session" ]] && owner='"${CLAUDE_CODE_SESSION_ID:?}"'
 
 warning=""
 fail=$(bash "$HELPER" doctor 2>&1 | grep -m1 '^FAIL' || true)
@@ -44,11 +47,11 @@ orphans=$(bash "$HELPER" list --json 2>/dev/null \
         | select(.status == "orphaned" or ($stale != "" and .updated_at < $stale))
       ]
       | sort_by(.updated_at) | reverse | .[:$max]
-      | .[] | [.id, .repo, .branch, .worktree, .pr, .last_sha] | @tsv' 2>/dev/null)
+      | .[] | [.id, .repo, .branch, .worktree, .pr, .last_sha] | map(. // "") | join("\u001f")' 2>/dev/null)
 [[ -z "$orphans" ]] && { [[ -n "$warning" ]] && emit "$warning"; quiet_exit; }
 
 blocks=""
-while IFS=$'\t' read -r id repo branch worktree pr sha; do
+while IFS=$'\x1f' read -r id repo branch worktree pr sha; do
   [[ -z "$repo" || -z "$branch" ]] && continue
 
   state=$(with_timeout 10 gh pr view "${pr:-$branch}" --repo "$repo" \
@@ -88,7 +91,10 @@ while IFS=$'\t' read -r id repo branch worktree pr sha; do
 
   blocks="${blocks}
 - **${repo} @ ${branch}**${pr:+ (PR #${pr})} — ${reason:-state unclear}
-  worktree: \`${worktree}\` · guardian id \`${id}\` · last known HEAD \`${sha:-?}\`"
+  worktree: \`${worktree}\` · guardian id \`${id}\` · last known HEAD \`${sha:-?}\`
+  \`\`\`
+  bash $(quote "$HELPER") register --repo $(quote "$repo") --branch $(quote "$branch") --worktree $(quote "$worktree") --session ${owner}
+  \`\`\`"
   log "$repo@$branch orphan to adopt — $reason"
 done <<< "$orphans"
 
@@ -98,7 +104,7 @@ ctx="${warning:+$warning
 
 }# Orphaned PR guardians (adopt these)
 
-The guardian watching each branch below died with its session and the PR is not done. Re-dispatch one \`pr-guardian\` agent per branch (from the pr-guardian plugin), passing repo / branch / worktree / guardian id verbatim — add \`--dry-run\` to the brief for the diagnosis and action plan without any push — then record the new handle:
+The guardian watching each branch below died with its session and the PR is not done. For each branch, in this order: run its \`register\` command as printed, right before the dispatch — it makes this session the owner and prints the guardian id; dispatch one \`pr-guardian:pr-guardian\` agent, passing \`repo:\`, \`branch:\`, \`worktree:\` and \`guardian id:\` verbatim, one per line — add \`--dry-run\` to the brief for the diagnosis and action plan without any push; then record the new handle:
 
 \`\`\`
 bash \"${HELPER}\" set --id <guardian id> --agent \"<handle returned by the Agent tool>\"
