@@ -68,10 +68,11 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
    `UNREVIEWED` or `DRY-RUN`) and the PR URL, then what needs a human. Subagent output
    never reaches the user on its own.
 
-The plugin's hooks do steps 2 to 5 for you after every successful `git push` on a
-`feat/`, `fix/`, `chore/`, `refactor/`, `perf/`, `docs/`, `ci/` or `test/` branch, and
-list the orphaned guardians at session start. This procedure is for a branch pushed
-before the plugin was installed, a guardian someone stopped, or a dry run.
+The plugin's hooks do steps 2 to 5 for you after every successful `git push` on a branch
+under one of the `branch_prefixes` (by default `feat/`, `fix/`, `chore/`, `refactor/`,
+`perf/`, `docs/`, `ci/` and `test/`), and list the orphaned guardians at session start.
+This procedure is for a branch pushed before the plugin was installed, a guardian someone
+stopped, or a dry run.
 
 ## Configuration
 
@@ -82,6 +83,7 @@ Read from `<repo>/.pr-guardian.json`, else `~/.config/pr-guardian.json`, else th
 | Key | Default | Effect |
 |---|---|---|
 | `orgs` | `[]` (any owner) | The hooks act only on repositories whose owner is listed; a manual `watch` ignores it. |
+| `branch_prefixes` | `["feat", "fix", "chore", "refactor", "perf", "docs", "ci", "test"]` | After a push, the hook dispatches only on a branch named `<prefix>/…` (without the slash here, matched literally), never on the default branch; a manual `watch` ignores it. The value replaces the default list: `["feat", "fix", "my-login"]`. |
 | `pr.create` | `true` | The guardian opens the PR when none exists. `false`: it never runs `gh pr create` and waits for one. |
 | `commits` | `"stack"` | Fixes are new commits; `--force-with-lease` only after a rebase. `"amend"`: every fix is amended into the branch's single commit. |
 | `pr.sync_body` | `false` | `true`: after an amend that rewrote the message, the PR body (and title) are rewritten from the head commit. |
