@@ -69,11 +69,11 @@ pr: #7 https://github.com/cdfarkas/cdfarkas-skills/pull/7 draft=false mergeable=
 next: nothing — PR is MERGED
 ```
 
-`status` lists the live guardians and one `plan` per entry. After every successful
-`git push` on a branch under one of the `branch_prefixes` (by default `feat/`, `fix/`,
+`status` lists the live guardians and one `plan` per entry. After a `git push` that
+[git recorded](reference.md#which-push-counts) on a branch under one of the `branch_prefixes` (by default `feat/`, `fix/`,
 `chore/`, `refactor/`, `perf/`, `docs/`, `ci/` and `test/`) the plugin's hooks do the
 `watch` for you; the command is for a branch pushed before the plugin was installed, a
-guardian someone stopped, or a dry run.
+push the hook could not see, a guardian someone stopped, or a dry run.
 State file, lock semantics, `plan` lines, report vocabulary and every failure line:
 [`reference.md`](reference.md).
 
@@ -104,7 +104,7 @@ description from the commit body:
 
 - `agents/pr-guardian.md` — the guardian agent, dispatched as `subagent_type: "pr-guardian:pr-guardian"`, the name Claude Code gives the plugin agent. Its frontmatter says `model: inherit`: it runs on whatever model the dispatching session uses, the plugin does not pick one for you.
 - `hooks/` — the scripts of four Claude Code hooks, declared in the plugin's entry of `.claude-plugin/marketplace.json`: `PreToolUse` on `Bash` (`lock-guard.sh`, blocks a `git commit` / `git push` on a branch whose lock someone else holds), `PostToolUse` on `Bash` (`dispatch.sh`, registers the branch and hands you the dispatch brief after a push), `SessionStart` (`adopt.sh`, runs `doctor` and lists the orphaned guardians, each with the `register` command that gives it to the new session), `SessionEnd` (`session-end.sh`, releases the session's locks and marks its guardians adoptable).
-- `scripts/pr-guardian.sh` — state, lock, config, `plan` and `doctor`; `--help` lists every command. `scripts/git-target.sh` resolves the repo and branch a `git` command acts on, for the hooks.
+- `scripts/pr-guardian.sh` — state, lock, config, `plan` and `doctor`; `--help` lists every command. `scripts/git-target.sh` recognises a real `git` command and the repository it acts on, for the hooks.
 
 ## Prerequisites
 

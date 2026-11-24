@@ -98,9 +98,23 @@ the scripts are in `hooks/`.
 | Event | Script | Does |
 |---|---|---|
 | `PreToolUse` on `Bash` | `lock-guard.sh` | When the command is a real `git commit` or `git push` (heredoc bodies and quoted strings ignored; `git -C <path>`, `cd <path> &&` and `env` prefixes resolved) on a repository whose owner passes `orgs`, and the branch's lock is held by someone other than the `PR_GUARDIAN=` caller: returns `{"decision": "block", "reason": …}` naming the holder, the agent to message, and the `locked` / `release` commands. Anything unexpected exits 0. |
-| `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, on a branch under one of the `branch_prefixes` of a repository passing `orgs` (never the default branch recorded in `origin/HEAD`, and never a branch without a `/`): `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
+| `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, when [the push is proved](#which-push-counts), on a branch under one of the `branch_prefixes` of a repository passing `orgs` (never the default branch recorded in `origin/HEAD`, and never a branch without a `/`): `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
 | `SessionStart` | `adopt.sh` | Runs `doctor`; on a `FAIL` injects one warning line (`[pr-guardian] prerequisite missing — …`). Then `prune`, and for the 3 most recent entries of other sessions that are `orphaned` or untouched for 45 minutes: a PR that is `MERGED` or `CLOSED` is marked `done`; a mergeable PR with no failing or pending check gets a note and is left alone; anything else has its lock released and is listed under `# Orphaned PR guardians (adopt these)` with worktree, guardian id, last HEAD and the `register … --session <this session>` command to run right before its dispatch. The hook registers nothing itself. |
 | `SessionEnd` | `session-end.sh` | For every `live` entry of the ending session: release its lock, `set --orphan` with a note, and on macOS post a notification. Other sessions' entries are never touched. |
+
+### Which push counts
+
+`dispatch.sh` never registers a branch that was not pushed, at its current `HEAD`, within the
+last ten minutes. It looks at the repository of the hook's `cwd` and of every path after `-C`
+or `cd` in the command. One counts when the last reflog entry of a remote-tracking ref of its
+checked-out branch is git's own `update by push`, at `HEAD`, less than ten minutes old (the
+longest a foreground command runs), and `HEAD` is not already the entry's `last_sha`. It acts
+when exactly one counts.
+
+So these stay silent: a push of another branch or under another name, two repositories pushed
+in one command, a path the hook cannot read (a variable, an escaped space) unless it is the
+`cwd`, a push still running in the background, `bash -c` or a script, a clone that does not
+track the branch (`--single-branch`), `core.logAllRefUpdates=false`. Use `watch` for those.
 
 ## `plan` output
 

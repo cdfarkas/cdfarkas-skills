@@ -7,8 +7,11 @@ set -uo pipefail
 
 HELPER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts" && pwd)/pr-guardian.sh"
 LOG="${PR_GUARDIAN_HOME:-$HOME/.pr-guardian}/pr-guardian.log"
-[[ -r "$HELPER" ]] || exit 0
+PUSH_MAX_AGE=600
+[[ -r "$HELPER" && -r "${HELPER%/*}/git-target.sh" ]] || exit 0
 command -v jq >/dev/null 2>&1 || exit 0
+# shellcheck source=../scripts/git-target.sh
+. "${HELPER%/*}/git-target.sh"
 
 log() { printf '[%s] dispatch: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" 2>/dev/null >> "$LOG" || true; }
 
@@ -24,31 +27,54 @@ cwd=$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)
 session=$(printf '%s' "$input" | jq -r '.session_id // empty' 2>/dev/null)
 [[ -z "$cmd" || -z "$cwd" ]] && exit 0
 
-printf '%s' "$cmd" | grep -q 'git'  || exit 0
-printf '%s' "$cmd" | grep -q 'push' || exit 0
+gt_is_git_verb "$cmd" push || exit 0
 printf '%s' "$cmd" | grep -Eq -- '--delete|--prune|--dry-run|[[:space:]]-d([[:space:]]|$)' && exit 0
 
 resp=$(printf '%s' "$input" | jq -r '.tool_response // empty' 2>/dev/null)
 printf '%s' "$resp" | grep -Eqi 'rejected|error:|failed to push|fatal:' && exit 0
 
-branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null)
-[[ -z "$branch" || "$branch" == "HEAD" ]] && exit 0
-[[ "$(git -C "$cwd" symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null)" == "refs/remotes/origin/$branch" ]] && exit 0
+# candidate <dir> — take its repository when a push moved the remote-tracking ref of its branch
+# to HEAD less than PUSH_MAX_AGE ago and HEAD is not registered yet. A second one: silence.
+toplevel=""
+candidate() {
+  local top b head pushed remote r orgs prefixes entry last
+  top=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 0
+  [[ "$top" == "$toplevel" ]] && return 0
+  b=$(git -C "$top" symbolic-ref -q --short HEAD 2>/dev/null) || return 0
+  head=$(git -C "$top" rev-parse -q --verify HEAD 2>/dev/null) || return 0
+  [[ "$(git -C "$top" symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null)" == "refs/remotes/origin/$b" ]] && return 0
+  pushed=$(git -C "$top" for-each-ref --format='%(refname)' "refs/remotes/*/$b" 2>/dev/null | while IFS= read -r ref; do
+    git -C "$top" log -g -1 --date=unix --format='%H %gd %gs' "$ref" -- 2>/dev/null
+  done | sed -nE "s/^$head .*@\{([0-9]+)\} update by push.*/\1/p" | sort -n | tail -1)
+  [[ -n "$pushed" ]] && (( $(date +%s) - pushed < PUSH_MAX_AGE )) || return 0
 
-remote=$(git -C "$cwd" remote get-url origin 2>/dev/null)
-repo=$(printf '%s' "$remote" | sed -E 's|.*[:/]([^/]+/[^/]+)$|\1|; s|\.git$||')
-[[ -z "$repo" ]] && exit 0
-toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$cwd")
+  remote=$(git -C "$top" remote get-url origin 2>/dev/null)
+  r=$(printf '%s' "$remote" | sed -E 's|.*[:/]([^/]+/[^/]+)$|\1|; s|\.git$||')
+  [[ -z "$r" ]] && return 0
 
-orgs=$(bash "$HELPER" config orgs --dir "$toplevel" 2>/dev/null || echo '[]')
-printf '%s' "$orgs" | jq -e --arg o "${repo%%/*}" 'length == 0 or index($o) != null' >/dev/null 2>&1 || exit 0
-prefixes=$(bash "$HELPER" config branch_prefixes --dir "$toplevel" 2>/dev/null || echo '[]')
-printf '%s' "$prefixes" | jq -e --arg b "$branch" 'type == "array" and any(.[] | strings; . as $p | $b | startswith($p + "/"))' >/dev/null 2>&1 || exit 0
+  orgs=$(bash "$HELPER" config orgs --dir "$top" 2>/dev/null || echo '[]')
+  printf '%s' "$orgs" | jq -e --arg o "${r%%/*}" 'length == 0 or index($o) != null' >/dev/null 2>&1 || return 0
+  prefixes=$(bash "$HELPER" config branch_prefixes --dir "$top" 2>/dev/null || echo '[]')
+  printf '%s' "$prefixes" | jq -e --arg b "$b" 'type == "array" and any(.[] | strings; . as $p | $b | startswith($p + "/"))' >/dev/null 2>&1 || return 0
 
-sha=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
-subject=$(git -C "$cwd" log -1 --format=%s 2>/dev/null)
+  entry=$(bash "$HELPER" get --repo "$r" --branch "$b" --session "$session" 2>/dev/null)
+  last=$(printf '%s' "$entry" | jq -r '.last_sha // ""' 2>/dev/null)
+  [[ -n "$last" && "$head" == "$last"* ]] && return 0
+  [[ -n "$toplevel" ]] && exit 0
+  toplevel=$top branch=$b repo=$r existing=$entry
+}
 
-existing=$(bash "$HELPER" get --repo "$repo" --branch "$branch" --session "$session" 2>/dev/null)
+candidate "$cwd"
+while IFS= read -r dir; do
+  dir=$(gt_unquote "$dir")
+  case "$dir" in '') continue ;; /*|[A-Za-z]:[/\\]*) ;; *) dir="$cwd/$dir" ;; esac
+  candidate "$dir"
+done < <(gt_strip_heredocs "$cmd" | grep -oE "(-C|cd)[[:space:]]+(\"[^\"]*\"|'[^']*'|[^[:space:];&|]+)" | sed -E 's/^(-C|cd)[[:space:]]+//')
+[[ -z "$toplevel" ]] && exit 0
+
+sha=$(git -C "$toplevel" rev-parse --short HEAD 2>/dev/null)
+subject=$(git -C "$toplevel" log -1 --format=%s 2>/dev/null)
+
 prev_agent=$(printf '%s' "$existing" | jq -r '.agent // ""' 2>/dev/null)
 prev_status=$(printf '%s' "$existing" | jq -r '.status // ""' 2>/dev/null)
 prev_pr=$(printf '%s' "$existing" | jq -r '.pr // ""' 2>/dev/null)
