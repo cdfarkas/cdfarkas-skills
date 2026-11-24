@@ -19,7 +19,7 @@ license: Apache-2.0
 
 Three entry points, one script and one agent. `<skill-dir>` is the directory holding this
 file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the agent is
-`agents/pr-guardian.md`, dispatched as `subagent_type: "pr-guardian"`.
+`agents/pr-guardian.md`, dispatched as `subagent_type: "pr-guardian:pr-guardian"`.
 
 | Caller says | Do |
 |---|---|
@@ -68,13 +68,22 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
 2. Resolve the target: `repo` as `owner/name` from `git remote get-url origin`, `branch`
    (the argument, else `git rev-parse --abbrev-ref HEAD`), `worktree` from
    `git rev-parse --show-toplevel`, HEAD from `git rev-parse --short HEAD`.
-3. Register the entry and keep the id it prints:
-   `bash <skill-dir>/scripts/pr-guardian.sh register --repo <repo> --branch <branch> --worktree <worktree> --sha <head>`.
-   If the same script's `get --repo <repo> --branch <branch>` already shows a `live` entry
-   with an agent, do not dispatch a second one: `SendMessage` that agent instead.
-4. Dispatch the agent, in the background, with a brief that carries verbatim: `repo`,
-   `branch`, `worktree`, `guardian id`, `script: <skill-dir>/scripts/pr-guardian.sh`, HEAD
-   and its subject, your own agent handle, `--dry-run` when asked, and the acceptance:
+3. Look at the entry first, with the Bash tool:
+   `bash <skill-dir>/scripts/pr-guardian.sh get --repo <repo> --branch <branch> --session "${CLAUDE_CODE_SESSION_ID:?}"`.
+   - `live` with an agent: do not dispatch a second one, `SendMessage` that agent instead.
+     Go on only when it is gone.
+   - `lost`: another session owns the branch and its guardian may still be running. Say so
+     and go on only if the user asks to take the branch over.
+
+   Otherwise register the entry under this session and keep the id it prints:
+   `bash <skill-dir>/scripts/pr-guardian.sh register --repo <repo> --branch <branch> --worktree "<worktree>" --sha <head> --session "${CLAUDE_CODE_SESSION_ID:?}"`.
+   Claude Code sets that variable for the Bash tool. When it is empty both commands stop
+   before they run the script: relay the error, say that the branch cannot be given to
+   this session, and dispatch nothing.
+4. Dispatch the agent (`subagent_type: "pr-guardian:pr-guardian"`), in the background, with
+   a brief that carries verbatim, one `key: value` per line: `repo`, `branch`, `worktree`,
+   `guardian id`, `script: <skill-dir>/scripts/pr-guardian.sh`, HEAD and its subject, your
+   own agent handle, `--dry-run` when asked, and the acceptance:
    *PR mergeable, every required check green, no unresolved review thread.*
 5. Right after the Agent tool returns, record the handle — an unregistered guardian is
    unreachable: `bash <skill-dir>/scripts/pr-guardian.sh set --id <id> --agent "<handle>"`.

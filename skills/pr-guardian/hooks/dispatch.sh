@@ -69,7 +69,7 @@ Do NOT spawn a second guardian for this branch. Tell the existing one that the b
 
   SendMessage({ to: "${prev_agent}", message: "New commit pushed on ${branch} — HEAD is now ${sha} (\\"${subject}\\"). Re-read the diff and restart your cycle from the new SHA." })
 
-If SendMessage reports that agent as gone, it died with an earlier session: dispatch a fresh pr-guardian for ${repo} @ ${branch} and re-register its handle with
+If SendMessage reports that agent as gone, it died with an earlier session: dispatch a fresh pr-guardian:pr-guardian agent for ${repo} @ ${branch} and re-register its handle with
   bash "${HELPER}" set --id ${gid} --agent "<new handle>"
 CTX
   emit "$ctx"
@@ -85,7 +85,7 @@ IFS= read -r -d '' ctx <<CTX || true
 
 Dispatch the background PR guardian now, in this same response if nothing blocks you — the \`pr-guardian\` agent from the pr-guardian plugin:
 
-  Agent({ subagent_type: "pr-guardian", description: "guard ${branch}", prompt: "<the brief below>" })
+  Agent({ subagent_type: "pr-guardian:pr-guardian", description: "guard ${branch}", prompt: "<the brief below>" })
 
 The brief MUST carry, verbatim (a subagent has none of this conversation's context):
   - repo: ${repo}

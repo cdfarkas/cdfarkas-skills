@@ -46,7 +46,9 @@ Commands:
   register --repo <owner/name> --branch <ref> [--worktree <path>] [--agent <name>]
            [--session <id>] [--pr <number>] [--sha <sha>]
         Create or refresh the entry for repo+branch; prints its id. Call it again with
-        --agent (or `set --agent`) right after the Agent tool returns the handle.
+        --agent (or `set --agent`) right after the Agent tool returns the handle. --session
+        makes that session the owner. Without --agent, the old handle is dropped when the
+        entry was not live or belonged to another session.
   get      --repo <owner/name> --branch <ref> [--session <id>]
         Print the entry as JSON (nothing if none). With --session, an entry owned by
         another session is reported with status "lost".
@@ -115,7 +117,9 @@ cmd_register() {
       --arg pr "$pr" --arg sha "$sha" --arg now "$(now)" '
       .guardians |= map(
         if .id == $id then
-          (if $agent   != "" then .agent      = $agent   else . end)
+          (if $agent != "" then .agent = $agent
+           elif .status != "live" or ($session != "" and .session_id != "" and .session_id != $session) then .agent = ""
+           else . end)
           | (if $session != "" then .session_id = $session else . end)
           | (if $pr      != "" then .pr         = $pr      else . end)
           | (if $sha     != "" then .last_sha   = $sha     else . end)
