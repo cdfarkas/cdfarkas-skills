@@ -87,7 +87,7 @@ description from the commit body:
 ## What ships
 
 - `agents/pr-guardian.md` — the guardian agent, dispatched as `subagent_type: "pr-guardian"`. Its frontmatter says `model: inherit`: it runs on whatever model the dispatching session uses, the plugin does not pick one for you.
-- `hooks/hooks.json` — four Claude Code hooks: `PreToolUse` on `Bash` (`lock-guard.sh`, blocks a `git commit` / `git push` on a branch whose lock someone else holds), `PostToolUse` on `Bash` (`dispatch.sh`, registers the branch and hands you the dispatch brief after a push), `SessionStart` (`adopt.sh`, runs `doctor` and lists the orphaned guardians), `SessionEnd` (`session-end.sh`, releases the session's locks and marks its guardians adoptable).
+- `hooks/` — the scripts of four Claude Code hooks, declared in the plugin's entry of `.claude-plugin/marketplace.json`: `PreToolUse` on `Bash` (`lock-guard.sh`, blocks a `git commit` / `git push` on a branch whose lock someone else holds), `PostToolUse` on `Bash` (`dispatch.sh`, registers the branch and hands you the dispatch brief after a push), `SessionStart` (`adopt.sh`, runs `doctor` and lists the orphaned guardians), `SessionEnd` (`session-end.sh`, releases the session's locks and marks its guardians adoptable).
 - `scripts/pr-guardian.sh` — state, lock, config, `plan` and `doctor`; `--help` lists every command. `scripts/git-target.sh` resolves the repo and branch a `git` command acts on, for the hooks.
 
 ## Prerequisites

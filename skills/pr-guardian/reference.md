@@ -76,7 +76,10 @@ and writes nothing.
 | `pr.sync_body` | `false` | boolean |
 | `review_bots` | `[]` | array of logins |
 
-## Hooks (`hooks/hooks.json`)
+## Hooks
+
+Declared in the `hooks` object of the `pr-guardian` entry in `.claude-plugin/marketplace.json`;
+the scripts are in `hooks/`.
 
 | Event | Script | Does |
 |---|---|---|

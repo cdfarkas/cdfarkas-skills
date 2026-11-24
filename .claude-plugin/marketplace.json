@@ -34,7 +34,50 @@
       "strict": false,
       "skills": ["./skills/pr-guardian"],
       "agents": ["./skills/pr-guardian/agents/pr-guardian.md"],
-      "hooks": "./skills/pr-guardian/hooks/hooks.json",
+      "hooks": {
+        "PreToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/pr-guardian/hooks/lock-guard.sh\""
+              }
+            ]
+          }
+        ],
+        "PostToolUse": [
+          {
+            "matcher": "Bash",
+            "hooks": [
+              {
+                "type": "command",
+                "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/pr-guardian/hooks/dispatch.sh\""
+              }
+            ]
+          }
+        ],
+        "SessionStart": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/pr-guardian/hooks/adopt.sh\""
+              }
+            ]
+          }
+        ],
+        "SessionEnd": [
+          {
+            "hooks": [
+              {
+                "type": "command",
+                "command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/pr-guardian/hooks/session-end.sh\""
+              }
+            ]
+          }
+        ]
+      },
       "category": "development",
       "homepage": "https://github.com/cdfarkas/cdfarkas-skills/tree/main/skills/pr-guardian"
     },

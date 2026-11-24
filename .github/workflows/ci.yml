@@ -14,9 +14,7 @@ jobs:
           fetch-depth: 0
 
       - name: Manifests parse
-        run: |
-          python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
-          python3 -c "import json; json.load(open('skills/pr-guardian/hooks/hooks.json'))"
+        run: python3 -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
 
       - name: Every skill has the required frontmatter
         run: python3 scripts/validate-skills.py

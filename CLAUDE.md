@@ -50,10 +50,15 @@ skills/<name>/
   evals/grade.py    regex grader, no model in the loop
   evals/RESULTS.md  the published run
   agents/           optional: a plugin that ships a background agent (one .md per agent)
-  hooks/            optional: a plugin that ships Claude Code hooks (hooks.json + the scripts)
+  hooks/            optional: the scripts of the Claude Code hooks a plugin ships
 ```
 
 Register the skill in `.claude-plugin/marketplace.json`, give it a `README.md` in its folder (usage, sample output, evaluation) and one row in the root `README.md` table.
+
+A plugin that ships hooks declares them inline, as the `hooks` object of its marketplace entry
+(event name to array of matcher groups): Claude Code refuses a file path there, and
+`claude plugin validate` does not report it. `validate-skills.py` checks the shape and that every
+`${CLAUDE_PLUGIN_ROOT}/…` script a command names exists.
 
 ## Checking legal sources
 
