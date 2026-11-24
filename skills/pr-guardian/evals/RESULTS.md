@@ -16,7 +16,8 @@ directory holding `jq` is replaced by a shim directory that mirrors it without `
 pointing at an empty temporary directory. Each environment was verified against the
 script's own `doctor` before the runs (`FAIL  jq:` and `FAIL  gh auth:` respectively).
 The watch loop (rebase, CI fixes, review triage) is not covered: it needs a live pull
-request with real checks and reviewers.
+request with real checks and reviewers. The `config init --user` step was added to the setup
+procedure after this run and is **not measured**.
 
 ## Scores
 

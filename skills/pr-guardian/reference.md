@@ -56,17 +56,24 @@ The PreToolUse hook lets a command through when it starts with, or contains,
 
 ## Configuration
 
-`config <key> [--dir <repo>]` prints the value in force as JSON. Source, first match wins:
-`.pr-guardian.json` at the top level of the git repository containing `--dir`, then
-`~/.config/pr-guardian.json`, then the default. A file that is not valid JSON prints
-`config: <file> is not valid JSON, using defaults` on stderr and falls back. Keys are
-merged over the defaults, so a file may set one key only.
+`config <key> [--dir <repo>]` prints the value in force as JSON. It is merged key by key
+from the default, then `~/.config/pr-guardian.json`, then `.pr-guardian.json` at the top
+level of the git repository containing `--dir`; the later one wins. An array replaces the
+earlier one, the keys of `pr` merge one by one, and `null` replaces like any value: it does
+not mean "inherit". Both files are optional and may set one key only. A file that is not one
+JSON object prints `config: <file> is not a JSON object, ignored` on stderr; the other one
+still applies.
 
-`config init [--dir <repo>]` writes `.pr-guardian.json` holding the six defaults at the
-top level of the git repository containing `--dir` (in `--dir` itself when it is not a
-repository) and prints the path. It never overwrites: `exists: <path>`, exit 0, when the
-file is already there. Under `--dry-run` it prints `dry-run: would write <path>: <json>`
-and writes nothing.
+`config init [--user] [--dir <repo>] [--set <key>=<json>]...` writes the `--set` values to a
+new file and prints its path. The target is `.pr-guardian.json` at the top level of the git
+repository containing `--dir` (in `--dir` itself when it is not a repository). With `--user`
+it is `~/.config/pr-guardian.json`, the folder is created when missing, and a value equal to
+its default is left out. `<key>` is one of the six keys below, `<json>` a JSON value of its
+type (`pr.create=false`, `commits="amend"`, `orgs=["my-org"]`); the last `--set` of a key
+wins. It never overwrites: `exists: <path>`, exit 0, when the file is already there. With
+nothing to put in the file it prints `nothing to write: <path>` and exits 0. Under
+`--dry-run` it prints `dry-run: would write <path>: <json>` and writes nothing. No hook
+calls it.
 
 | Key | Default | Type |
 |---|---|---|
@@ -132,8 +139,8 @@ needs a human.
 ## `--dry-run`
 
 A global flag, or `PR_GUARDIAN_DRY_RUN=1`. `register`, `set`, `done`, `acquire`,
-`release` and `prune` print `dry-run: would <action>` and write nothing; `get`, `list`,
-`locked`, `config`, `plan` and `doctor` are unaffected, they never write.
+`release`, `prune` and `config init` print `dry-run: would <action>` and write nothing;
+`get`, `list`, `locked`, `config <key>`, `plan` and `doctor` are unaffected, they never write.
 
 ## Failure lines
 
@@ -141,7 +148,9 @@ Exit 1 with the cause on stderr, unless noted:
 
 `register: need --repo and --branch` · `set: need --id` · `acquire: need --repo and
 --branch` · `held by: <who>` (acquire refused) · `config: need a key (orgs,
-branch_prefixes, pr.create, commits, pr.sync_body, review_bots)` · `plan: need --repo and
+branch_prefixes, pr.create, commits, pr.sync_body, review_bots)` · `config init: unknown key
+"<key>" (<the six keys>)` · `config init: <key>: need a JSON <boolean|string|array of
+strings>, got <value>` · `config init: unknown argument <x>` · `plan: need --repo and
 --branch` · `plan: cannot read <repo> (gh repo view failed — auth, name or network)` ·
 `unknown command: <x>` (exit 2, usage follows) · no command at all prints the usage and
 exits 1.

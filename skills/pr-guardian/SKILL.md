@@ -23,7 +23,7 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
 
 | Caller says | Do |
 |---|---|
-| "set up pr-guardian", "check my setup", "is my machine ready", `doctor` | the **setup** procedure below: `doctor`, then `doctor --fix` and `config init` as proposals. |
+| "set up pr-guardian", "check my setup", "is my machine ready", `doctor` | the **setup** procedure below: `doctor`, then `doctor --fix`, `config init --user` and `config init` as proposals. |
 | "watch my PR", "babysit this branch", "keep it mergeable", `watch [<branch>] [--dry-run]` | the **watch** procedure below. No branch named: the current one. |
 | "is my branch mergeable", "what would the guardian do", `watch --dry-run` | **watch** with `--dry-run`: the agent runs `doctor` and `plan`, prints the action list, pushes nothing, and ends with `DRY-RUN`. |
 | "which guardians are running", `status` | `bash <skill-dir>/scripts/pr-guardian.sh list`, then one `plan --repo <repo> --branch <branch>` per live entry; relay both. |
@@ -40,11 +40,26 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
    say the command may need an elevated terminal. A `FAIL` with no `fix:` line (`shell`,
    `state`) is fixed by hand as its hint says.
 4. After a fix, run `doctor` again and relay it. Stop while a `FAIL` remains.
-5. Propose `bash <skill-dir>/scripts/pr-guardian.sh config init --dir <repo>` in one line
-   (`exists: <path>` means the repo already has one; `--dry-run` shows the file) and ask
-   two things: does a bot open the PRs (then `pr.create` is `false`) and does the team
-   squash-merge (then `commits` is `"amend"`). Explain a key with its row in the table
-   below, one line each, when the user asks or answers.
+5. The user file, for every repository of this user. Run
+   `bash <skill-dir>/scripts/pr-guardian.sh config init --user --dry-run`: `exists: <path>`
+   means there is one, go to step 6. Otherwise say in one line that the file is optional and
+   ask two things: which owners' repositories may the hooks act on (`orgs`), and which extra
+   branch prefixes does the user push (`branch_prefixes`). No answer to write: no file.
+   `branch_prefixes` replaces the list, so pass the eight defaults plus the extra ones:
+
+   ```bash
+   bash <skill-dir>/scripts/pr-guardian.sh config init --user --dry-run --set 'orgs=["my-org"]' \
+     --set 'branch_prefixes=["feat","fix","chore","refactor","perf","docs","ci","test","my-login"]'
+   ```
+
+   Show the `dry-run:` line and run the command again without `--dry-run` only once the user
+   approves it. Keep `--set` to what the user answered, one `<key>=<json>` per key.
+6. Once step 5 is settled, the repository file, the same way with `config init --dir <repo>`
+   instead of `--user`. Ask two things: does a bot open the PRs (`--set pr.create=false`) and
+   does the team squash-merge (`--set 'commits="amend"'`). Pass only an answer that differs
+   from what `config <key> --dir <repo>` prints; none: no file. `exists: <path>`: the command
+   never changes it, propose the edit of that file instead. Explain a key with its row in
+   the table below, one line each, when the user asks or answers.
 
 ## watch
 
@@ -76,9 +91,10 @@ stopped, or a dry run.
 
 ## Configuration
 
-Read from `<repo>/.pr-guardian.json`, else `~/.config/pr-guardian.json`, else the default.
+Merged key by key: the default, then `~/.config/pr-guardian.json`, then
+`<repo>/.pr-guardian.json`. Both files are optional and no hook writes them.
 `bash <skill-dir>/scripts/pr-guardian.sh config <key> --dir <repo>` prints the value in force;
-`config init --dir <repo>` writes the file with the defaults when the repo has none.
+`config init [--user]` writes a file that does not exist yet from its `--set` values.
 
 | Key | Default | Effect |
 |---|---|---|

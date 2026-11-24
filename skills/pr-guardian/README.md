@@ -11,7 +11,7 @@ session.
 
 ```
 /pr-guardian doctor [--fix]
-/pr-guardian config init [--dir <repo>] [--dry-run]
+/pr-guardian config init [--user] [--dir <repo>] [--set <key>=<json>]... [--dry-run]
 /pr-guardian watch [<branch>] [--dry-run]
 /pr-guardian status
 ```
@@ -35,11 +35,24 @@ A failed check names its cause and the command that fixes it, `FAIL  jq: not ins
 (brew install jq)`. `doctor --fix` prints those commands back as `fix: brew install jq`
 lines and runs none of them (`nothing to fix` when every check passed): the agent shows each
 one as a proposal and runs only what you approve; `gh auth login` is interactive, so you run
-it yourself. `config init` writes `.pr-guardian.json` at the repo root with the six
-defaults and prints the path, `exists: <path>` when the repo already has one, and with
-`--dry-run` prints the file instead of writing it. The setup conversation is: `doctor`, the
-`fix:` proposals, `doctor` again, then `config init` with two questions — does a bot open
-your PRs (`pr.create: false`), does the team squash-merge (`commits: "amend"`).
+it yourself. `config init` writes the keys you give it to `.pr-guardian.json` at the repo
+root and prints the path, `exists: <path>` when the repo already has one, `nothing to write:
+<path>` when no key is given, and with `--dry-run` prints the file instead of writing it.
+`config init --user` does the same for `~/.config/pr-guardian.json`, your own settings for
+every repository, and leaves out a value equal to its default:
+
+```bash
+bash scripts/pr-guardian.sh config init --user --set 'orgs=["my-org"]' \
+  --set 'branch_prefixes=["feat","fix","chore","refactor","perf","docs","ci","test","my-login"]'
+bash scripts/pr-guardian.sh config init --dir <repo> --set pr.create=false --set 'commits="amend"'
+```
+
+The setup conversation is: `doctor`, the `fix:` proposals, `doctor` again, then, when you
+have no user file, `config init --user` with two questions — which owners' repositories the
+hooks may act on (`orgs`), which extra branch prefixes you push (`branch_prefixes`) — and
+`config init` with two more — does a bot open your PRs (`pr.create=false`), does the team
+squash-merge (`commits="amend"`). Both files are optional, each is written only after you
+approve its `--dry-run` output, and no hook writes either one.
 
 `watch` registers the branch and dispatches the agent in the background; with
 `--dry-run` the agent runs the read-only diagnosis, prints the actions it would take
@@ -66,9 +79,10 @@ State file, lock semantics, `plan` lines, report vocabulary and every failure li
 
 ## Configuration
 
-Read from `<repo>/.pr-guardian.json`, else `~/.config/pr-guardian.json`, else the
-defaults. `bash scripts/pr-guardian.sh config <key> --dir <repo>` prints the value in
-force; `config init --dir <repo>` writes the file with the defaults when the repo has none.
+Merged key by key: the defaults, then `~/.config/pr-guardian.json`, then
+`<repo>/.pr-guardian.json`. `bash scripts/pr-guardian.sh config <key> --dir <repo>` prints
+the value in force. A key present in the repository file wins even at its default value:
+remove it from there to let your own setting apply.
 
 | Key | Default | Effect |
 |---|---|---|
