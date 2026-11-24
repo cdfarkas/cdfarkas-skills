@@ -106,7 +106,7 @@ gt_resolve_repo() {
   cand=$(gt_command_path "$cmd")
   [ -n "$cand" ] || cand="$cwd"
   case "$cand" in
-    /*) ;;
+    /*|[A-Za-z]:[/\\]*) ;;
     *) cand="$cwd/$cand" ;;
   esac
   [ -d "$cand" ] || cand="$cwd"

@@ -97,7 +97,7 @@ the scripts are in `hooks/`.
 
 | Event | Script | Does |
 |---|---|---|
-| `PreToolUse` on `Bash` | `lock-guard.sh` | When the command is a real `git commit` or `git push` (heredoc bodies and quoted strings ignored; `git -C <path>`, `cd <path> &&` and `env` prefixes resolved) on a repository whose owner passes `orgs`, and the branch's lock is held by someone other than the `PR_GUARDIAN=` caller: returns `{"decision": "block", "reason": …}` naming the holder, the agent to message, and the `locked` / `release` commands. Anything unexpected exits 0. |
+| `PreToolUse` on `Bash` | `lock-guard.sh` | When the command is a real `git commit` or `git push` (heredoc bodies and quoted strings ignored; `git -C <path>`, `cd <path> &&` and `env` prefixes resolved; a path starting with `/` or a drive letter is absolute) on a repository whose owner passes `orgs`, and the branch's lock is held by someone other than the `PR_GUARDIAN=` caller: returns `{"decision": "block", "reason": …}` naming the holder, the agent to message, and the `locked` / `release` commands. Anything unexpected exits 0. |
 | `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, when [the push is proved](#which-push-counts), on a branch under one of the `branch_prefixes` of a repository passing `orgs` (never the default branch recorded in `origin/HEAD`, and never a branch without a `/`): `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
 | `SessionStart` | `adopt.sh` | Runs `doctor`; on a `FAIL` injects one warning line (`[pr-guardian] prerequisite missing — …`). Then `prune`, and for the 3 most recent entries of other sessions that are `orphaned` or untouched for 45 minutes: a PR that is `MERGED` or `CLOSED` is marked `done`; a mergeable PR with no failing or pending check gets a note and is left alone; anything else has its lock released and is listed under `# Orphaned PR guardians (adopt these)` with worktree, guardian id, last HEAD and the `register … --session <this session>` command to run right before its dispatch. The hook registers nothing itself. |
 | `SessionEnd` | `session-end.sh` | For every `live` entry of the ending session: release its lock, `set --orphan` with a note, and on macOS post a notification. Other sessions' entries are never touched. |
@@ -192,6 +192,6 @@ both `apt` and `dnf`; the one the distribution has applies.
 ## Portability
 
 bash 3.2 (macOS default) and 5.x (Git Bash, Linux); `mkdir` as the lock, no `flock`; BSD
-and GNU `stat` and `date`; the hooks always run under `bash` explicitly. The Windows CI
+and GNU `date` and `stat` (`stat -c` first: GNU takes `-f` as the file system); the hooks always run under `bash` explicitly. The Windows CI
 job runs `--help` and `doctor` under Git Bash without a token and expects the
 `FAIL  gh` line, not a crash.
