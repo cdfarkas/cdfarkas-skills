@@ -61,11 +61,14 @@ Commands:
   config   <key> [--dir <repo>]                       print one setting as JSON
         Keys and defaults: orgs [] · pr.create true · commits "stack" · pr.sync_body false
         · review_bots [] · branch_prefixes ["feat","fix","chore","refactor","perf","docs",
-        "ci","test"]. Read from .pr-guardian.json at the repo root, else
-        ~/.config/pr-guardian.json, else the default.
-  config   init [--dir <repo>]                        write .pr-guardian.json with the defaults
-        at the repo root (or in --dir when it is not a git repository); prints the path,
-        `exists: <path>` when one is already there. With --dry-run, prints what it would write.
+        "ci","test"]. Merged key by key: the default, then ~/.config/pr-guardian.json, then
+        .pr-guardian.json at the repo root; arrays replace.
+  config   init [--user] [--dir <repo>] [--set <key>=<json>]...
+        Write the keys given to .pr-guardian.json at the repo root (in --dir when it is not
+        a git repository), or with --user, those that differ from the default to
+        ~/.config/pr-guardian.json. Prints the path, `exists: <path>` when a file is already
+        there (never overwritten), `nothing to write: <path>` when no value is left.
+        Example: --set 'orgs=["my-org"]' --set pr.create=false --set 'commits="amend"'
   plan     --repo <owner/name> --branch <ref> [--dir <repo>]
         Read-only diagnosis: the PR, distance to the default branch, checks, review,
         then one `next:` line per action a guardian would take. Never writes.
@@ -76,8 +79,8 @@ Commands:
         nothing; `nothing to fix` when every check passed.
   -h, --help
 
---dry-run   Every mutating command (register, set, done, acquire, release, prune) prints
-            `dry-run: would <action>` and writes nothing. Also PR_GUARDIAN_DRY_RUN=1.
+--dry-run   Every mutating command (register, set, done, acquire, release, prune, config init)
+            prints `dry-run: would <action>` and writes nothing. Also PR_GUARDIAN_DRY_RUN=1.
 
 State lives in $PR_GUARDIAN_HOME (default ~/.pr-guardian): state.json, locks/, pr-guardian.log.
 Requires bash 3.2+, git, gh, jq and coreutils timeout — on Windows, Git Bash.
@@ -323,31 +326,54 @@ cmd_prune() {
 }
 
 cmd_config() {
-  local key="" dir="."
+  local key="" dir="." user=0 sets="" extra=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --dir) dir="$2"; shift 2;;
-      *) [[ -z "$key" ]] && key="$1"; shift;;
+      --dir)  dir="$2"; shift 2;;
+      --user) user=1;   shift;;
+      --set)  sets+=${2//$'\n'/ }$'\n'; shift 2;;
+      *) if [[ -z "$key" ]]; then key="$1"; else extra="$1"; fi; shift;;
     esac
   done
   [[ -z "$key" ]] && { echo "config: need a key (orgs, branch_prefixes, pr.create, commits, pr.sync_body, review_bots)" >&2; return 1; }
-  local top file=""
+  local top file
   top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || top=""
   if [[ "$key" == "init" ]]; then
+    [[ -n "$extra" ]] && { echo "config init: unknown argument $extra" >&2; return 1; }
+    local values
+    values=$(printf '%s' "$sets" | jq -nRrc --argjson d "$CONFIG_DEFAULTS" --argjson user "$user" '
+      [$d | paths(type != "object") | select(all(.[]; type == "string")) | join(".")] as $keys
+      | reduce inputs as $set ({}; if type == "string" then . else
+          ($set | split("=")[0] // "") as $k
+          | ($set | ltrimstr($k + "=")) as $json
+          | if $keys | index($k) == null then "unknown key \"\($k)\" (\($keys | join(", ")))"
+            else ($k | split(".")) as $p | ($d | getpath($p)) as $default
+              | [$json | fromjson?] as $v
+              | if ($v | length) != 1 or ($v[0] | type) != ($default | type)
+                  or (($default | type) == "array" and ($v[0] | any(.[]; type != "string")))
+                then "\($k): need a JSON \($default | type | sub("array"; "array of strings")), got \($json)"
+                elif $user == 1 and $v[0] == $default then delpaths([$p])
+                else setpath($p; $v[0]) end
+            end
+        end)') || return 1
+    [[ "$values" == "{"* ]] || { echo "config init: $values" >&2; return 1; }
     file="${top:-$dir}/.pr-guardian.json"
+    (( user )) && file="${HOME:?}/.config/pr-guardian.json"
     [[ -f "$file" ]] && { echo "exists: $file"; return 0; }
-    dry "write $file: $CONFIG_DEFAULTS" && return 0
-    jq -n "$CONFIG_DEFAULTS" > "$file" && echo "$file"
+    [[ "$values" == "{}" ]] && { echo "nothing to write: $file"; return 0; }
+    dry "write $file: $values" && return 0
+    if (( user )); then mkdir -p "${file%/*}" || return 1; fi
+    jq . <<< "$values" > "$file" && echo "$file"
     return
   fi
-  [[ -n "$top" && -f "$top/.pr-guardian.json" ]] && file="$top/.pr-guardian.json"
-  [[ -z "$file" && -f "$HOME/.config/pr-guardian.json" ]] && file="$HOME/.config/pr-guardian.json"
-  if [[ -n "$file" ]] && jq -e . "$file" >/dev/null 2>&1; then
-    jq -c --arg k "$key" --argjson d "$CONFIG_DEFAULTS" '($d * .) | getpath($k | split("."))' "$file"
-  else
-    [[ -n "$file" ]] && echo "config: $file is not valid JSON, using defaults" >&2
-    jq -cn --arg k "$key" --argjson d "$CONFIG_DEFAULTS" '$d | getpath($k | split("."))'
-  fi
+  set --
+  for file in "${HOME:-}/.config/pr-guardian.json" "${top:+$top/.pr-guardian.json}"; do
+    [[ -f "$file" ]] || continue
+    if jq -es 'length == 1 and (.[0] | type == "object")' "$file" >/dev/null 2>&1; then set -- "$@" "$file"
+    else echo "config: $file is not a JSON object, ignored" >&2; fi
+  done
+  jq -cn --arg k "$key" --argjson d "$CONFIG_DEFAULTS" \
+    'reduce inputs as $f ($d; . * $f) | getpath($k | split("."))' "$@" </dev/null
 }
 
 cmd_plan() {
