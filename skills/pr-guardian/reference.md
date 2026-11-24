@@ -62,7 +62,7 @@ The PreToolUse hook lets a command through when it starts with, or contains,
 `config: <file> is not valid JSON, using defaults` on stderr and falls back. Keys are
 merged over the defaults, so a file may set one key only.
 
-`config init [--dir <repo>]` writes `.pr-guardian.json` holding the five defaults at the
+`config init [--dir <repo>]` writes `.pr-guardian.json` holding the six defaults at the
 top level of the git repository containing `--dir` (in `--dir` itself when it is not a
 repository) and prints the path. It never overwrites: `exists: <path>`, exit 0, when the
 file is already there. Under `--dry-run` it prints `dry-run: would write <path>: <json>`
@@ -71,6 +71,7 @@ and writes nothing.
 | Key | Default | Type |
 |---|---|---|
 | `orgs` | `[]` | array of owner logins; empty means any |
+| `branch_prefixes` | `["feat","fix","chore","refactor","perf","docs","ci","test"]` | array of strings, replacing the default list; `"my-login"` accepts `my-login/x`, not `my-logins/x`, and is never read as a pattern. Entries that are not strings are ignored; an empty list, or a value that is not an array, dispatches nothing |
 | `pr.create` | `true` | boolean |
 | `commits` | `"stack"` | `"stack"` or `"amend"` |
 | `pr.sync_body` | `false` | boolean |
@@ -84,7 +85,7 @@ the scripts are in `hooks/`.
 | Event | Script | Does |
 |---|---|---|
 | `PreToolUse` on `Bash` | `lock-guard.sh` | When the command is a real `git commit` or `git push` (heredoc bodies and quoted strings ignored; `git -C <path>`, `cd <path> &&` and `env` prefixes resolved) on a repository whose owner passes `orgs`, and the branch's lock is held by someone other than the `PR_GUARDIAN=` caller: returns `{"decision": "block", "reason": …}` naming the holder, the agent to message, and the `locked` / `release` commands. Anything unexpected exits 0. |
-| `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, on a `feat/ fix/ chore/ refactor/ perf/ docs/ ci/ test/` branch of a repository passing `orgs`: `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
+| `PostToolUse` on `Bash` | `dispatch.sh` | After a `git push` whose output shows no rejection or error, on a branch under one of the `branch_prefixes` of a repository passing `orgs` (never the default branch recorded in `origin/HEAD`, and never a branch without a `/`): `register` (or refresh) the entry, `prune`, then inject either the dispatch brief (repo, branch, worktree, guardian id, script, HEAD, acceptance, `--dry-run` hint, the `set --agent` command) or, when a `live` guardian with a handle already exists, the `SendMessage` to send it. Never blocks. |
 | `SessionStart` | `adopt.sh` | Runs `doctor`; on a `FAIL` injects one warning line (`[pr-guardian] prerequisite missing — …`). Then `prune`, and for the 3 most recent entries of other sessions that are `orphaned` or untouched for 45 minutes: a PR that is `MERGED` or `CLOSED` is marked `done`; a mergeable PR with no failing or pending check gets a note and is left alone; anything else has its lock released and is listed under `# Orphaned PR guardians (adopt these)` with worktree, guardian id and last HEAD. |
 | `SessionEnd` | `session-end.sh` | For every `live` entry of the ending session: release its lock, `set --orphan` with a note, and on macOS post a notification. Other sessions' entries are never touched. |
 
@@ -139,10 +140,11 @@ A global flag, or `PR_GUARDIAN_DRY_RUN=1`. `register`, `set`, `done`, `acquire`,
 Exit 1 with the cause on stderr, unless noted:
 
 `register: need --repo and --branch` · `set: need --id` · `acquire: need --repo and
---branch` · `held by: <who>` (acquire refused) · `config: need a key (orgs, pr.create,
-commits, pr.sync_body, review_bots)` · `plan: need --repo and --branch` · `plan: cannot
-read <repo> (gh repo view failed — auth, name or network)` · `unknown command: <x>`
-(exit 2, usage follows) · no command at all prints the usage and exits 1.
+--branch` · `held by: <who>` (acquire refused) · `config: need a key (orgs,
+branch_prefixes, pr.create, commits, pr.sync_body, review_bots)` · `plan: need --repo and
+--branch` · `plan: cannot read <repo> (gh repo view failed — auth, name or network)` ·
+`unknown command: <x>` (exit 2, usage follows) · no command at all prints the usage and
+exits 1.
 
 `doctor` runs every check and prints one line each, in this order: bash (3.2 or newer),
 git, gh, gh auth, scopes (`skip` on a fine-grained token, which reports none), jq, timeout

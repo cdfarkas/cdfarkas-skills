@@ -33,7 +33,7 @@ printf '%s' "$resp" | grep -Eqi 'rejected|error:|failed to push|fatal:' && exit 
 
 branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD 2>/dev/null)
 [[ -z "$branch" || "$branch" == "HEAD" ]] && exit 0
-printf '%s' "$branch" | grep -Eq '^(feat|fix|chore|refactor|perf|docs|ci|test)/' || exit 0
+[[ "$(git -C "$cwd" symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null)" == "refs/remotes/origin/$branch" ]] && exit 0
 
 remote=$(git -C "$cwd" remote get-url origin 2>/dev/null)
 repo=$(printf '%s' "$remote" | sed -E 's|.*[:/]([^/]+/[^/]+)$|\1|; s|\.git$||')
@@ -42,6 +42,8 @@ toplevel=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$
 
 orgs=$(bash "$HELPER" config orgs --dir "$toplevel" 2>/dev/null || echo '[]')
 printf '%s' "$orgs" | jq -e --arg o "${repo%%/*}" 'length == 0 or index($o) != null' >/dev/null 2>&1 || exit 0
+prefixes=$(bash "$HELPER" config branch_prefixes --dir "$toplevel" 2>/dev/null || echo '[]')
+printf '%s' "$prefixes" | jq -e --arg b "$branch" 'type == "array" and any(.[] | strings; . as $p | $b | startswith($p + "/"))' >/dev/null 2>&1 || exit 0
 
 sha=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null)
 subject=$(git -C "$cwd" log -1 --format=%s 2>/dev/null)

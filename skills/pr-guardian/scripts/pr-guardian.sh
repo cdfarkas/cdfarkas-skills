@@ -10,7 +10,7 @@ LOCK_DIR="$STATE_DIR/locks"
 LOG="$STATE_DIR/pr-guardian.log"
 DRY_RUN="${PR_GUARDIAN_DRY_RUN:-0}"
 LOCK_STALE_SECONDS=1800
-CONFIG_DEFAULTS='{"orgs":[],"pr":{"create":true,"sync_body":false},"commits":"stack","review_bots":[]}'
+CONFIG_DEFAULTS='{"orgs":[],"branch_prefixes":["feat","fix","chore","refactor","perf","docs","ci","test"],"pr":{"create":true,"sync_body":false},"commits":"stack","review_bots":[]}'
 
 log() { printf '[%s] %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" 2>/dev/null >> "$LOG" || true; }
 now() { date -u +%Y-%m-%dT%H:%M:%SZ; }
@@ -60,7 +60,8 @@ Commands:
   prune    [--max-age-days N]                         drop entries and locks older than N days (7)
   config   <key> [--dir <repo>]                       print one setting as JSON
         Keys and defaults: orgs [] · pr.create true · commits "stack" · pr.sync_body false
-        · review_bots []. Read from .pr-guardian.json at the repo root, else
+        · review_bots [] · branch_prefixes ["feat","fix","chore","refactor","perf","docs",
+        "ci","test"]. Read from .pr-guardian.json at the repo root, else
         ~/.config/pr-guardian.json, else the default.
   config   init [--dir <repo>]                        write .pr-guardian.json with the defaults
         at the repo root (or in --dir when it is not a git repository); prints the path,
@@ -329,7 +330,7 @@ cmd_config() {
       *) [[ -z "$key" ]] && key="$1"; shift;;
     esac
   done
-  [[ -z "$key" ]] && { echo "config: need a key (orgs, pr.create, commits, pr.sync_body, review_bots)" >&2; return 1; }
+  [[ -z "$key" ]] && { echo "config: need a key (orgs, branch_prefixes, pr.create, commits, pr.sync_body, review_bots)" >&2; return 1; }
   local top file=""
   top=$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null) || top=""
   if [[ "$key" == "init" ]]; then

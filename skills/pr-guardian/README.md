@@ -35,7 +35,7 @@ A failed check names its cause and the command that fixes it, `FAIL  jq: not ins
 (brew install jq)`. `doctor --fix` prints those commands back as `fix: brew install jq`
 lines and runs none of them (`nothing to fix` when every check passed): the agent shows each
 one as a proposal and runs only what you approve; `gh auth login` is interactive, so you run
-it yourself. `config init` writes `.pr-guardian.json` at the repo root with the five
+it yourself. `config init` writes `.pr-guardian.json` at the repo root with the six
 defaults and prints the path, `exists: <path>` when the repo already has one, and with
 `--dry-run` prints the file instead of writing it. The setup conversation is: `doctor`, the
 `fix:` proposals, `doctor` again, then `config init` with two questions — does a bot open
@@ -57,9 +57,10 @@ next: nothing — PR is MERGED
 ```
 
 `status` lists the live guardians and one `plan` per entry. After every successful
-`git push` on a `feat/`, `fix/`, `chore/`, `refactor/`, `perf/`, `docs/`, `ci/` or
-`test/` branch the plugin's hooks do the `watch` for you; the command is for a branch
-pushed before the plugin was installed, a guardian someone stopped, or a dry run.
+`git push` on a branch under one of the `branch_prefixes` (by default `feat/`, `fix/`,
+`chore/`, `refactor/`, `perf/`, `docs/`, `ci/` and `test/`) the plugin's hooks do the
+`watch` for you; the command is for a branch pushed before the plugin was installed, a
+guardian someone stopped, or a dry run.
 State file, lock semantics, `plan` lines, report vocabulary and every failure line:
 [`reference.md`](reference.md).
 
@@ -72,6 +73,7 @@ force; `config init --dir <repo>` writes the file with the defaults when the rep
 | Key | Default | Effect |
 |---|---|---|
 | `orgs` | `[]` (any owner) | The hooks act only on repositories whose owner is listed; a manual `watch` ignores it. |
+| `branch_prefixes` | `["feat", "fix", "chore", "refactor", "perf", "docs", "ci", "test"]` | After a push, the hook dispatches only on a branch named `<prefix>/…` (without the slash here, matched literally), never on the default branch; a manual `watch` ignores it. The value replaces the default list: `["feat", "fix", "my-login"]`. |
 | `pr.create` | `true` | The guardian opens the PR when none exists. `false`: it never runs `gh pr create` and waits for one. |
 | `commits` | `"stack"` | Fixes are new commits; `--force-with-lease` only after a rebase. `"amend"`: every fix is amended into the branch's single commit. |
 | `pr.sync_body` | `false` | `true`: after an amend that rewrote the message, the PR body (and title) are rewritten from the head commit. |
