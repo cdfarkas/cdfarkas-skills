@@ -92,11 +92,11 @@ file; the script is `scripts/pr-guardian.sh` (`--help` lists every command), the
    `UNREVIEWED` or `DRY-RUN`) and the PR URL, then what needs a human. Subagent output
    never reaches the user on its own.
 
-The plugin's hooks do steps 2 to 5 for you after every successful `git push` on a branch
+The plugin's hooks do steps 2 to 5 for you after a successful `git push` on a branch
 under one of the `branch_prefixes` (by default `feat/`, `fix/`, `chore/`, `refactor/`,
 `perf/`, `docs/`, `ci/` and `test/`), and list the orphaned guardians at session start.
-This procedure is for a branch pushed before the plugin was installed, a guardian someone
-stopped, or a dry run.
+This procedure is for a branch pushed before the plugin was installed, a push the hook could
+not see, a guardian someone stopped, or a dry run.
 
 ## Configuration
 
