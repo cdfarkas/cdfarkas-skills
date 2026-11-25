@@ -33,7 +33,7 @@ SCORE_RE = re.compile(r"^(\d+)/(\d+)\b")
 
 def load_cases(path: Path, skill: str) -> tuple[list[dict], list[str]]:
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         return [], [f"{path}: {exc}"]
     errors: list[str] = []
@@ -100,7 +100,7 @@ def check_graders(path: Path, graders: dict, cases: list[dict]) -> list[str]:
 def check_results(path: Path, cases: list[dict]) -> tuple[list[str], list[str]]:
     if not path.exists():
         return [f"{path}: missing"], []
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     errors: list[str] = []
     warnings: list[str] = []
     for case in cases:
@@ -146,6 +146,7 @@ def check_agents(root: Path) -> list[str]:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     skills = sorted(p for p in Path("skills").glob("*/") if p.is_dir())
     if not skills:
         print("no skills found under skills/")
