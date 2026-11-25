@@ -24,6 +24,8 @@ removed: a new one supersedes it, and only its Status changes.
 `python3 scripts/check-adr.py origin/main` enforces it.
 
 Agents start from existing ones and are trialled before being kept (ADR 0001).
+The tool of the improvement loop is public, the record of errors stays outside this repository (ADR 0002):
+no ledger, no row of a real error, invented examples only.
 
 ## Before a skill is committed
 
@@ -45,7 +47,8 @@ Agents start from existing ones and are trialled before being kept (ADR 0001).
    `python3 scripts/validate-evals.py`, `python3 scripts/check-docs-sync.py origin/main`,
    `python3 scripts/check-adr.py --self-test`, `python3 scripts/check-adr.py origin/main`,
    `python3 agents/trials/data/bench.py selftest`, `python3 agents/loop.py selftest`,
-   `python3 agents/loop.py size` (tracked files only, so `git add` a new agent first),
+   `python3 agents/loop.py size` (tracked files only, so `git add` a new agent first; it also
+   refuses a `.jsonl` file outside `skills/`),
    `bash -n` on every `.sh`, the personal-path grep) before committing; the `windows`
    job in `.github/workflows/ci.yml` needs a PR to run, so open one. Plugins carry no
    `version` field and Claude Code tracks them by commit SHA, so no version bump is needed
