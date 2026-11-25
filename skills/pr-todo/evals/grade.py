@@ -123,6 +123,7 @@ GRADERS = {
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run_dir", type=Path)
     ap.add_argument("--org", required=True)
@@ -141,7 +142,7 @@ def main() -> int:
             report[name] = {"error": f"missing {answer}"}
             failed += 1
             continue
-        results = grader(answer.read_text(), ctx)
+        results = grader(answer.read_text(encoding="utf-8"), ctx)
         report[name] = {
             "passed": sum(1 for _, ok, _ in results if ok),
             "total": len(results),

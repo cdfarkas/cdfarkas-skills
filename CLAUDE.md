@@ -74,6 +74,7 @@ skills/<name>/
   evals/evals.json  prompts + assertions
   evals/grade.py    regex grader, no model in the loop
   evals/RESULTS.md  the published run
+  evals/reserved.txt  optional: the checks kept for the gate of `agents/loop.py`, one per line
   agents/           optional: a plugin that ships a background agent (one .md per agent)
   hooks/            optional: the scripts of the Claude Code hooks a plugin ships
 ```
@@ -88,7 +89,7 @@ A plugin that ships hooks declares them inline, as the `hooks` object of its mar
 ## Agents and their trials
 
 `agents/` holds the trials that compare an agent with the generalist and the loop that improves
-an agent without growing its file: steps, commands and isolation limits in `agents/README.md`.
+an agent or a skill without growing its file: steps, commands and isolation limits in `agents/README.md`.
 An agent file is at most 1,500 words and a `SKILL.md` body at most 500 lines. A file that was
 already longer has its own ceiling in `CEILINGS` (`agents/loop.py`), which may only go down.
 
