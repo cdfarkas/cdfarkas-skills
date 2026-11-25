@@ -15,6 +15,16 @@ under `agents/`, candidates included, it is the `RESULTS.md` of its trial in
 `agents/trials/<trial>/`, which names the agent file by its path in backticks.
 `validate-evals.py` checks that the name is there, not that the evidence is good.
 
+## Decisions
+
+One ADR per major decision, in `docs/adr/` (copy `0000-template.md`). The PR that accepts or
+supersedes one updates the living docs and cites the ADR in force there: `CLAUDE.md`, `README.md`,
+`agents/README.md`, `docs/how-these-skills-are-built.md`. An accepted ADR is never edited or
+removed: a new one supersedes it, and only its Status changes.
+`python3 scripts/check-adr.py origin/main` enforces it.
+
+Agents start from existing ones and are trialled before being kept (ADR 0001).
+
 ## Before a skill is committed
 
 1. **Behaviour in a script, not in prose.** If two agents could read a sentence and
@@ -33,6 +43,7 @@ under `agents/`, candidates included, it is the `RESULTS.md` of its trial in
    done yet, `RESULTS.md` says so; an absent or flattering results file is a defect.
 4. **Run the CI locally** (`python3 scripts/validate-skills.py`,
    `python3 scripts/validate-evals.py`, `python3 scripts/check-docs-sync.py origin/main`,
+   `python3 scripts/check-adr.py --self-test`, `python3 scripts/check-adr.py origin/main`,
    `python3 agents/trials/data/bench.py selftest`, `python3 agents/loop.py selftest`,
    `python3 agents/loop.py size` (tracked files only, so `git add` a new agent first),
    `bash -n` on every `.sh`, the personal-path grep) before committing; the `windows`

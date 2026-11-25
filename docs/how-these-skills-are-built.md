@@ -90,12 +90,17 @@ lines, which is what it should have done at the time.
 The same rule holds for an agent: the evidence rule in [`../CLAUDE.md`](../CLAUDE.md)
 applies, and the baseline is the generalist, with no role file, on the same task. The
 first trial, [`../agents/trials/data/`](../agents/trials/data/RESULTS.md), gave both arms
-full marks, so it showed no gain and has to be made harder.
+full marks, so it showed no gain and has to be made harder. Where the agents come from and how a
+trial decides are recorded in [ADR 0001](adr/0001-start-from-existing-agents.md).
 
 CI runs the self-tests of the trial and of the loop on Linux and Windows. The trial must
 give the reference solution full marks, fail a naive one where planned and give an empty
 one zero; the loop must reject one case per gate rule. `loop.py size` caps the length of
 agents and skills. No model runs in CI.
+
+`scripts/check-adr.py` checks in CI the shape and status of every ADR and that the living docs cite
+exactly the accepted ones; on a PR, also that an ADR accepted on the base only ever becomes
+superseded. It cannot see a decision nobody recorded, nor whether a citing sentence matches its ADR.
 
 ## On the tooling
 

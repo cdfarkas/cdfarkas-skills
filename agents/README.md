@@ -2,6 +2,7 @@
 
 The scripts measure. **A person accepts or refuses every change**, even after an `ACCEPT`.
 The evidence rule is in [`../CLAUDE.md`](../CLAUDE.md), section Evidence.
+Agents start from existing ones and are trialled before being kept: [ADR 0001](../docs/adr/0001-start-from-existing-agents.md).
 
 1. **Log** the failure in `failures.md`. A single error changes nothing.
 2. **Same error twice** for one agent: write a test case first, and fill in the `case` column.

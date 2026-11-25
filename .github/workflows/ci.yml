@@ -49,6 +49,15 @@ jobs:
             python3 scripts/check-docs-sync.py
           fi
 
+      - name: Decision records
+        run: |
+          python3 scripts/check-adr.py --self-test
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            python3 scripts/check-adr.py "origin/${{ github.base_ref }}"
+          else
+            python3 scripts/check-adr.py
+          fi
+
       - name: No personal paths or private organizations
         run: |
           if grep -rInE '/Users/[a-z]+|/home/[a-z]+' --include='*.md' --include='*.sh' --include='*.jq' --include='*.py' --include='*.json' .; then
@@ -82,6 +91,11 @@ jobs:
           python agents/trials/data/bench.py selftest
           python agents/loop.py selftest
           python agents/loop.py size
+
+      - name: Decision records
+        run: |
+          python scripts/check-adr.py --self-test
+          python scripts/check-adr.py
 
       - name: Doctor reports the missing token instead of crashing
         env:
