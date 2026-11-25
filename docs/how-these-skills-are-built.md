@@ -98,8 +98,12 @@ trial decides are recorded in [ADR 0001](adr/0001-start-from-existing-agents.md)
 
 CI runs the self-tests of the trial and of the loop on Linux and Windows. The trial must
 give the reference solution full marks, fail a naive one where planned and give an empty
-one zero; the loop must reject one case per gate rule. `loop.py size` caps the length of
-agents and skills. No model runs in CI.
+one zero; the loop must reject one case per gate rule and take an invented failure of an
+invented skill from the log to the gate. `loop.py size` caps the length of agents and
+skills. No model runs in CI.
+
+The same loop can judge a change to a skill from the answers already graded by its
+`evals/grade.py`: limits and steps in [`../agents/README.md`](../agents/README.md).
 
 `scripts/check-adr.py` checks in CI the shape and status of every ADR and that the living docs cite
 exactly the accepted ones; on a PR, also that an ADR accepted on the base only ever becomes
