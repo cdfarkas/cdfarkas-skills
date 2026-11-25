@@ -35,6 +35,12 @@ jobs:
       - name: Evals, graders and published results agree
         run: python3 scripts/validate-evals.py
 
+      - name: Agent trial and loop self-tests, size limits
+        run: |
+          python3 agents/trials/data/bench.py selftest
+          python3 agents/loop.py selftest
+          python3 agents/loop.py size
+
       - name: Docs follow the code
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -70,6 +76,12 @@ jobs:
           bash skills/sentry-triage/scripts/sentry-triage.sh --help | grep -q '^Usage:'
           bash skills/pr-todo/scripts/pr-todo.sh --help | grep -q '^Usage:'
           bash skills/pr-guardian/scripts/pr-guardian.sh --help | grep -q '^Usage:'
+
+      - name: Agent trial and loop self-tests, size limits
+        run: |
+          python agents/trials/data/bench.py selftest
+          python agents/loop.py selftest
+          python agents/loop.py size
 
       - name: Doctor reports the missing token instead of crashing
         env:

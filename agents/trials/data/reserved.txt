@@ -1,0 +1,15 @@
+T2:06.txt no leak
+T2:06.txt facts kept
+T2:07.txt no leak
+T2:07.txt facts kept
+T2:08.txt no leak
+T2:08.txt facts kept
+T2:09.txt no leak
+T2:09.txt facts kept
+T2:10.txt no leak
+T2:10.txt facts kept
+T3:purge.py runs
+T3:no trace left
+T3:other clients intact in databases
+T3:other clients intact in files
+T3:proof written

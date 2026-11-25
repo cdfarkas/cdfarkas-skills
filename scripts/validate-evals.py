@@ -11,6 +11,8 @@ Rules enforced:
     assertion count and N <= M; `not measured` is accepted in the without-skill columns only;
     a missing row is a warning, not an error, when the file says the run is `not yet run`
   - a skill directory with no evals/evals.json is reported as a warning, never silently skipped
+  - every agent file under agents/ (a .md that opens with frontmatter, candidates included) is
+    named by its path, in backticks, in a RESULTS.md of agents/trials/*/
 """
 from __future__ import annotations
 
@@ -136,6 +138,13 @@ def check(evals_dir: Path) -> tuple[list[str], list[str]]:
     return errors + result_errors, warnings
 
 
+def check_agents(root: Path) -> list[str]:
+    results = "".join(p.read_text(encoding="utf-8") for p in root.glob("trials/*/RESULTS.md"))
+    return [f"{p.as_posix()}: not named in any agents/trials/*/RESULTS.md"
+            for p in sorted(root.rglob("*.md"))
+            if p.read_text(encoding="utf-8").startswith("---") and f"`{p.as_posix()}`" not in results]
+
+
 def main() -> int:
     skills = sorted(p for p in Path("skills").glob("*/") if p.is_dir())
     if not skills:
@@ -152,6 +161,8 @@ def main() -> int:
         errors, warnings = check(d)
         all_errors += errors
         all_warnings += warnings
+
+    all_errors += check_agents(Path("agents"))
 
     for w in all_warnings:
         print(f"  warn {w}")

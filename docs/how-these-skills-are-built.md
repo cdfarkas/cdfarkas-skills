@@ -85,6 +85,18 @@ README passes it. Its job is to make forgetting the docs a CI failure instead of
 follow-up nobody opens. Run against the tree that PR #7 left behind, it fails on five
 lines, which is what it should have done at the time.
 
+## Agents are tried against the generalist
+
+The same rule holds for an agent: the evidence rule in [`../CLAUDE.md`](../CLAUDE.md)
+applies, and the baseline is the generalist, with no role file, on the same task. The
+first trial, [`../agents/trials/data/`](../agents/trials/data/RESULTS.md), gave both arms
+full marks, so it showed no gain and has to be made harder.
+
+CI runs the self-tests of the trial and of the loop on Linux and Windows. The trial must
+give the reference solution full marks, fail a naive one where planned and give an empty
+one zero; the loop must reject one case per gate rule. `loop.py size` caps the length of
+agents and skills. No model runs in CI.
+
 ## On the tooling
 
 Anthropic ships the evaluation machinery first-party in the `skill-creator` skill

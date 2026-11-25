@@ -52,6 +52,14 @@ sessions (`front-review`: 3 runs per arm; `intake`: four multi-turn prompts). `n
 limit, in the `pr-todo` case) or the harness did not report the figure; it is reported as such,
 never as a zero.
 
+## Agent trials
+
+[`agents/`](agents/) compares an agent's role file with the generalist on the same invented
+task, graded by a script, and holds the loop that improves an agent without growing its file.
+First result, on an earlier version of the data trial: 32/32 for both, so no gain was shown.
+The published version has not been run yet. Details:
+[RESULTS.md](agents/trials/data/RESULTS.md). No agent is shipped from there.
+
 ## What the output looks like
 
 `pr-todo`, as the agent relays it, unchanged:
@@ -97,7 +105,8 @@ is Claude Code specific.
    skill that scores the same as the baseline does not ship.
 3. **Results published, failures included.** `evals/RESULTS.md` carries the method, the
    run date, the scores table, what the baselines got wrong, and every run that did not
-   complete, reported as not measured.
+   complete, reported as not measured. The evidence rule, for agents too, is in
+   [`CLAUDE.md`](CLAUDE.md).
 4. **CI on Linux and Windows Git Bash.** Scripts are bash 3.2 compatible, parse under
    both, and the repo is grepped for personal paths on every push.
 
