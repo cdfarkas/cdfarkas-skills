@@ -3,6 +3,18 @@
 Public repository. Every skill ships with the evidence it works; nothing personal or
 company-specific goes in (CI greps for `/Users/…` and `/home/…`).
 
+## Evidence
+
+No agent or skill is added or changed without recorded evidence: runs with and without it, the
+date, the model, the scores, the failures, and what was not measured. A claim without evidence
+is marked **unverified**. A trial that both arms pass fully proves nothing: make it harder
+before running it again.
+
+For a skill the record is `skills/<name>/evals/RESULTS.md` (rules 2 and 3 below). For an agent
+under `agents/`, candidates included, it is the `RESULTS.md` of its trial in
+`agents/trials/<trial>/`, which names the agent file by its path in backticks.
+`validate-evals.py` checks that the name is there, not that the evidence is good.
+
 ## Before a skill is committed
 
 1. **Behaviour in a script, not in prose.** If two agents could read a sentence and
@@ -21,6 +33,8 @@ company-specific goes in (CI greps for `/Users/…` and `/home/…`).
    done yet, `RESULTS.md` says so; an absent or flattering results file is a defect.
 4. **Run the CI locally** (`python3 scripts/validate-skills.py`,
    `python3 scripts/validate-evals.py`, `python3 scripts/check-docs-sync.py origin/main`,
+   `python3 agents/trials/data/bench.py selftest`, `python3 agents/loop.py selftest`,
+   `python3 agents/loop.py size` (tracked files only, so `git add` a new agent first),
    `bash -n` on every `.sh`, the personal-path grep) before committing; the `windows`
    job in `.github/workflows/ci.yml` needs a PR to run, so open one. Plugins carry no
    `version` field and Claude Code tracks them by commit SHA, so no version bump is needed
@@ -59,6 +73,13 @@ A plugin that ships hooks declares them inline, as the `hooks` object of its mar
 (event name to array of matcher groups): Claude Code refuses a file path there, and
 `claude plugin validate` does not report it. `validate-skills.py` checks the shape and that every
 `${CLAUDE_PLUGIN_ROOT}/…` script a command names exists.
+
+## Agents and their trials
+
+`agents/` holds the trials that compare an agent with the generalist and the loop that improves
+an agent without growing its file: steps, commands and isolation limits in `agents/README.md`.
+An agent file is at most 1,500 words and a `SKILL.md` body at most 500 lines. A file that was
+already longer has its own ceiling in `CEILINGS` (`agents/loop.py`), which may only go down.
 
 ## Checking legal sources
 
