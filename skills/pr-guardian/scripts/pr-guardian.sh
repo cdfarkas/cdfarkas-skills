@@ -273,7 +273,7 @@ cmd_locked() {
   local dir="$LOCK_DIR/$(slug "$repo" "$branch").lock"
   [[ -d "$dir" ]] || return 1
   local mtime age
-  mtime=$(stat -f %m "$dir" 2>/dev/null || stat -c %Y "$dir" 2>/dev/null || echo 0)
+  mtime=$(stat -c %Y "$dir" 2>/dev/null || stat -f %m "$dir" 2>/dev/null || echo 0)
   age=$(( $(date +%s) - mtime ))
   if (( age > LOCK_STALE_SECONDS )); then
     log "locked: stale lock ($age s) on $repo@$branch — releasing"
@@ -323,7 +323,7 @@ cmd_prune() {
   local d mtime
   for d in "$LOCK_DIR"/*.lock; do
     [[ -d "$d" ]] || continue
-    mtime=$(stat -f %m "$d" 2>/dev/null || stat -c %Y "$d" 2>/dev/null || echo 0)
+    mtime=$(stat -c %Y "$d" 2>/dev/null || stat -f %m "$d" 2>/dev/null || echo 0)
     (( mtime < cutoff )) && { rm -rf "$d"; log "prune: stale lock $d"; }
   done
   log "prune: max-age ${days}d"
