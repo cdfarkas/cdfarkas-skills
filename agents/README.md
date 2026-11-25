@@ -4,19 +4,20 @@ The scripts measure. **A person accepts or refuses every change**, even after an
 The evidence rule is in [`../CLAUDE.md`](../CLAUDE.md), section Evidence.
 Agents start from existing ones and are trialled before being kept: [ADR 0001](../docs/adr/0001-start-from-existing-agents.md).
 
-1. **Log** the failure in `failures.md`. A single error changes nothing.
-2. **Same error twice** for one agent: write a test case first, and fill in the `case` column.
+1. **Log** the error in a ledger kept outside this repository. A single error changes nothing.
+2. **Same error twice** for one target, or once more after its case (`due`): write a test case first, and log it with `case`.
 3. **Choose the place**: a script or a hook, else a file read on demand, else a line in the agent.
 4. **Change little**: four changes at most, without making the file longer.
 5. **Keep** only if the reserved checks rise over 3 runs, with no regression, on the same model.
-6. **Log what was refused** in `rejected.md`: `gate` prints the row to paste.
+6. **Log what was refused**, outside this repository too: `gate` prints the line, as JSON.
 7. **Prune** every month, or when the model changes.
 
 ## Commands
 
 ```
 python agents/loop.py size
-python agents/loop.py due
+python agents/loop.py due --ledger FILE
+python agents/loop.py report --ledger FILE [--date YYYY-MM-DD]
 python agents/loop.py run --candidate NAME [--role AGENT] --runs 3 --model MODEL --out SCORES.json [--max-budget-usd CAP --yes]
 python agents/loop.py scores --skill NAME --model MODEL --out SCORES.json RUN RUN RUN [-- GRADER_ARGS]
 python agents/loop.py gate --base BEFORE.json --new AFTER.json --agent AGENT_OR_SKILL_MD --base-rev REV
@@ -26,14 +27,46 @@ python agents/trials/data/bench.py grade DIR
 python agents/trials/data/bench.py selftest
 ```
 
-Exit codes of `loop.py`: 0 accepted or nothing to do, 1 refused, too long or case missing, 2 unusable input.
+Exit codes of `loop.py`: 0 accepted or nothing to do, 1 refused, too long or due, 2 unusable input. `report` is 0 whatever it reports.
 Without `--role`, `run` measures the generalist. Without `--yes`, it only prints the commands, the number of model runs and the total cap.
 Give the full model name: an alias such as `opus` can point to another model between two measurements.
 
 `size` reads the files tracked by git: `skills/*/agents/*.md`, the agents under `agents/` (a `.md` that opens with frontmatter, outside `candidates/`) and every `SKILL.md`.
 A file that was already too long has its own ceiling in `CEILINGS`, reported at each run.
+It also refuses a tracked `.jsonl` file outside `skills/`: a ledger has no place here. It only knows the extension.
 
 `run` launches the data trial only.
+
+## Ledger
+
+This repository holds the tool and no data: [ADR 0002](../docs/adr/0002-record-of-errors-stays-outside.md). The ledger is a file of yours, one JSON object per line, where lines are only ever added at the end. An invented one:
+
+```
+{"date":"2026-01-05","project":"shop","target":"tone","error":"no-signature","source":"https://github.com/example/shop/pull/7"}
+{"date":"2026-01-19","project":"shop","target":"tone","error":"no-signature","source":"https://github.com/example/shop/issues/12"}
+{"date":"2026-01-20","project":"shop","target":"tone","error":"no-signature","case":"skills/tone/evals/evals.json: reply"}
+{"date":"2026-02-02","project":"shop","target":"tone","error":"no-signature"}
+```
+
+`due` is empty after the first line, lists the error after the second, not after the third, and lists it again after the fourth, as come back after its case.
+
+A line with `case` is a coverage, any other line an occurrence. No other key is allowed.
+
+| key | value |
+|---|---|
+| `date` | a real date, `YYYY-MM-DD` |
+| `project` | the repository that holds the target: lowercase letters, digits, `.`, `_`, `-`, 100 characters at most |
+| `target`, `error` | lowercase words and digits joined by dashes, starting with a letter, 40 characters at most. No closed list |
+| `source` | optional, occurrences only: `https://github.com/OWNER/REPO/` then `pull/N`, `issues/N` or `commit/` and the full hash |
+| `case` | coverages only, the test: letters, digits, spaces and `.,:/_-`, 120 characters at most |
+
+- **An error is a project, a target and an id.** Two projects can both have a target named `scripts`, whose errors have nothing in common, and a case in one protects nothing in the other.
+- **One event counts once.** The same error with the same `source` is one occurrence, whatever the dates. Without `source`, one occurrence a day. The same coverage on the same date counts once. `report` gives the number of repeated lines.
+- **A case covers what is above it.** An occurrence below the last coverage of its error, and not dated before it, came back: the error is due at once, until a new coverage is added.
+- A coverage with no occurrence above it is refused, as it would cover nothing (a mistyped id).
+- The whole file is read or none of it: a bad line, an empty or missing file, or a last line without an end is exit 2, with the line number. Check a copy with `due` before you add a line for good.
+
+`report` prints Markdown: what is due first, then all the counts, with the sources as links, then the ids spelled alike for the same project and target. It names projects and links: keep it private. `--date` sets the last day of the 30-day windows (today in UTC if absent). The report does not hold `size`, which is about this repository only.
 
 ## Budget
 

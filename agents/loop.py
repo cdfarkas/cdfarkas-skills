@@ -1,15 +1,25 @@
-"""Improvement loop: size limits, due failures, skill eval scores, acceptance gate, trial launcher.
+"""Improvement loop: size limits, due errors and report of a ledger, skill eval scores, acceptance gate, trial launcher.
 
 Exit codes: 0 ok or accepted, 1 over the limit, due or rejected, 2 unusable input.
 """
-import argparse, contextlib, datetime, hashlib, importlib.util, io, json, os, shlex, shutil, subprocess, sys, tempfile, time
+import argparse, contextlib, datetime, difflib, hashlib, importlib.util, io, itertools, json, os, re, shlex, shutil, subprocess, sys, tempfile, time
 from fractions import Fraction
 from pathlib import Path
 from unittest import mock
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
-AGENT_WORDS, SKILL_LINES, MAX_HUNKS, MIN_RUNS, TIMEOUT_S = 1500, 500, 4, 3, 3600
+AGENT_WORDS, SKILL_LINES, MAX_HUNKS, MIN_RUNS, TIMEOUT_S, WINDOW_DAYS, ALIKE = 1500, 500, 4, 3, 3600, 30, 0.8
+ID = r"(?!.{41})[a-z][a-z0-9]*(?:-[a-z0-9]+)*"
+FIELDS = {
+    "date": r"[0-9]{4}-[0-9]{2}-[0-9]{2}",
+    "project": r"[a-z0-9._-]{1,100}",
+    "target": ID,
+    "error": ID,
+    "source": r"https://github\.com/[A-Za-z0-9-]{1,39}/(?!\.{1,2}/)[A-Za-z0-9._-]{1,100}/(?:(?:pull|issues)/[1-9][0-9]{0,8}|commit/[0-9a-f]{40})",
+    "case": r"(?! )[A-Za-z0-9 .,:/_-]{1,120}(?<! )",
+}
+KEYS = {"date", "project", "target", "error"}
 # Files already over the limit: the word count each may not exceed. Lower it when a file shrinks, never raise it.
 CEILINGS = {"skills/pr-guardian/agents/pr-guardian.md": 2038}
 PROMPT = "Do all the work described in TASKS.md. Write only in this folder."
@@ -57,23 +67,100 @@ def size(root):
         n = len(body(lines))
         if n > SKILL_LINES:
             over.append(f"{rel}: {n} lines, limit {SKILL_LINES}")
+    over += [f"{rel}: no ledger in this repository" for rel in git(root, "ls-files", "--", "*.jsonl", ":!skills/").splitlines()]
     print("\n".join(notes + (over or ["size ok"])))
     return 1 if over else 0
 
 
-def due(root):
-    table = [x for x in (root / "agents" / "failures.md").read_text(encoding="utf-8").splitlines() if x.startswith("|")]
-    if len(table) < 2:
-        raise Unusable("failures.md: no table")
-    seen = {}
-    for x in table[2:]:
-        row = [c.strip() for c in x.strip().removeprefix("|").removesuffix("|").split("|")]
-        if len(row) != 6 or not row[1] or not row[2]:
-            raise Unusable(f"failures.md: expected 6 cells with agent and error id: {x}")
-        seen.setdefault((row[1], row[2]), []).append(row[5])
-    late = [f"{agent}: {error} seen {len(cases)} times, no case" for (agent, error), cases in sorted(seen.items()) if len(cases) >= 2 and not any(cases)]
+def distinct(pairs):
+    if len(dict(pairs)) < len(pairs):
+        raise ValueError
+    return dict(pairs)
+
+
+def entries(path):
+    try:
+        *lines, rest = Path(path).read_bytes().split(b"\n")
+    except OSError as e:
+        raise Unusable(str(e))
+    if not lines and not rest:
+        raise Unusable(f"{path}: empty ledger")
+    for n, raw in enumerate([*lines, *filter(None, [rest])], 1):
+        where = f"{path}, line {n}"
+        if n > len(lines):
+            raise Unusable(f"{where}: no end of line, so it may be truncated")
+        try:
+            x = json.loads(raw.decode("utf-8"), object_pairs_hook=distinct)
+        except (ValueError, RecursionError):
+            raise Unusable(f"{where}: not one JSON object in UTF-8 with distinct keys")
+        if not isinstance(x, dict) or (x.keys() - {"source"} != KEYS and x.keys() != KEYS | {"case"}):
+            raise Unusable(f"{where}: an occurrence has the keys date, project, target, error and an optional source; a coverage has case instead of source")
+        wrong = [k for k, v in x.items() if not isinstance(v, str) or not re.fullmatch(FIELDS[k], v)]
+        if wrong:
+            raise Unusable(f"{where}: invalid {', '.join(wrong)}")
+        try:
+            datetime.date.fromisoformat(x["date"])
+        except ValueError:
+            raise Unusable(f"{where}: no such date")
+        yield where, x
+
+
+def read_ledger(path):
+    found, known, repeated = {}, set(), 0
+    for where, x in entries(path):
+        pair = x["project"], x["target"], x["error"]
+        key = (pair, x["case"], x["date"]) if "case" in x else (pair, x.get("source", x["date"]))
+        if key in known:
+            repeated += 1
+            continue
+        known.add(key)
+        if "case" not in x:
+            e = found.setdefault(pair, {"rows": [], "case": None, "since": 0})
+            e["rows"].append(x)
+            e["since"] += bool(e["case"]) and x["date"] >= e["case"]["date"]
+        elif pair in found:
+            found[pair].update(case=x, since=0)
+        else:
+            raise Unusable(f"{where}: a case for an error with no occurrence above")
+    return sorted(found.items()), repeated
+
+
+def state(e):
+    if e["case"]:
+        return f"came back after its case: {e['since']}" if e["since"] else ""
+    return f"seen {len(e['rows'])} times, no case" if len(e["rows"]) >= 2 else ""
+
+
+def due(root, ledger):
+    late = [f"{project}/{target}: {error} {state(e)}" for (project, target, error), e in read_ledger(ledger)[0] if state(e)]
     print("\n".join(late) or "nothing due")
     return 1 if late else 0
+
+
+def links(e):
+    urls = [x["source"] for x in e["rows"] if "source" in x]
+    return " ".join(f"[{u.rsplit('/', 1)[1][:7] if '/commit/' in u else '#' + u.rsplit('/', 1)[1]}]({u})" for u in urls)
+
+
+def report(root, ledger, date):
+    found, repeated = read_ledger(ledger)
+    today = date or datetime.datetime.now(datetime.timezone.utc).date()
+    days = [(today - datetime.timedelta(n)).isoformat() for n in range(2 * WINDOW_DAYS)]
+    last, before = days[:WINDOW_DAYS], days[WINDOW_DAYS:]
+    names = {key: " ".join(f"`{part}`" for part in key) for key, _ in found}
+    late = [f"- {names[key]}: {state(e)} {links(e)}".rstrip() for key, e in found if state(e)]
+    alike = [f"- {names[a]} and `{b[2]}`" for (a, _), (b, _) in itertools.combinations(found, 2)
+             if a[:2] == b[:2] and difflib.SequenceMatcher(None, a[2], b[2]).ratio() >= ALIKE]
+    out = [f"## Improvement loop, {today}", "", f"{sum(len(e['rows']) for _, e in found)} occurrences, {len(found)} errors, {repeated} repeated lines counted once.",
+           f"Last {WINDOW_DAYS} days: {last[-1]} to {last[0]}. Before: {before[-1]} to {before[0]}.",
+           "", "### Due", "", *(late or ["Nothing due."]), "", "### Counts", "",
+           f"| project | target | error id | all | last {WINDOW_DAYS} days | {WINDOW_DAYS} days before | case | sources |", "|---|---|---|---|---|---|---|---|"]
+    for key, e in found:
+        cells = [*(f"`{part}`" for part in key), len(e["rows"]), *(sum(x["date"] in window for x in e["rows"]) for window in (last, before)),
+                 f"`{e['case']['case']}`" if e["case"] else "no", links(e)]
+        out.append(f"| {' | '.join(map(str, cells))} |")
+    print("\n".join(out + ["", "### Ids spelled alike", "", *(alike or ["None."])]))
+    return 0
 
 
 def fresh(out):
@@ -208,9 +295,9 @@ def gate(root, base, new, agent, base_rev):
     for ok, text in rules:
         print(f"  {'ok  ' if ok else 'FAIL'} {text}")
     if failed:
-        cells = [datetime.date.today().isoformat(), rel, f"{hunks} hunks, {old_words} -> {new_words} words since {sha[:7]}", "; ".join(failed),
-                 f"reserved {float(r0):.3f} -> {float(r1):.3f}, visible {float(v0):.3f} -> {float(v1):.3f}"]
-        print("\nRow for agents/rejected.md:\n| " + " | ".join(c.replace("|", "/") for c in cells) + " |")
+        row = {"date": datetime.date.today().isoformat(), "agent": rel, "change": f"{hunks} hunks, {old_words} -> {new_words} words since {sha[:7]}", "reason": "; ".join(failed),
+               "scores": f"reserved {float(r0):.3f} -> {float(r1):.3f}, visible {float(v0):.3f} -> {float(v1):.3f}"}
+        print("\nLine for the log of rejected changes:\n" + json.dumps(row))
     return 1 if failed else 0
 
 
@@ -335,14 +422,124 @@ def selftest():
     print("selftest ok")
 
 
+SOURCE = "https://github.com/example/demo/pull/{}"
+
+
+def entry(**more):
+    return {"date": "2026-01-01", "project": "demo", "target": "data", "error": "no-signature", **more}
+
+
+def walk_ledger(x, call):
+    ledger = x / "walk.jsonl"
+    one, two, three = (entry(source=SOURCE.format(n)) for n in (1, 2, 3))
+    case, bare = entry(case="evals.json: reply, 2"), entry()
+
+    def check(code, *lines, has="", cmd=("due",), end="\n"):
+        ledger.write_bytes("".join((s if isinstance(s, str) else json.dumps(s)) + end for s in lines).encode("utf-8"))
+        return call(code, *cmd, "--ledger", ledger, has=has)
+
+    seen, back = "demo/data: no-signature seen 2 times, no case\n", "demo/data: no-signature came back after its case: 1\n"
+    for code, lines, want in (
+            (0, [one], "nothing due\n"), (1, [one, two], seen), (1, [one, bare], seen), (1, [bare, {**bare, "date": "2026-01-02"}], seen),
+            (0, [one, {**one, "date": "2026-01-02"}], "nothing due\n"), (0, [bare, bare], "nothing due\n"),
+            (0, [one, {**two, "target": "other"}], "nothing due\n"), (0, [one, {**two, "error": "other"}], "nothing due\n"), (0, [one, {**two, "project": "other"}], "nothing due\n"),
+            (0, [one, two, case], "nothing due\n"), (0, [one, case], "nothing due\n"), (1, [one, two, {**case, "target": "data"}, {**two, "target": "other"}, {**one, "target": "other"}],
+                                                                                     "demo/other: no-signature seen 2 times, no case\n"),
+            (1, [one, case, two], back), (1, [one, case, two, three], back.replace(": 1", ": 2")), (0, [one, case, one], "nothing due\n"),
+            (0, [one, {**case, "date": "2026-01-02"}, two], "nothing due\n"), (1, [one, case, {**two, "date": "2026-01-02"}], back),
+            (0, [one, case, two, {**case, "case": "a harder one"}], "nothing due\n"), (0, [one, case, two, {**case, "date": "2026-01-02"}], "nothing due\n"),
+            (1, [one, case, two, case], back), (0, [one, case, {**case, "date": "2026-01-03"}, two], "nothing due\n"), (1, [one, case, two, {**case, "case": "a harder one"}, three], back)):
+        assert check(code, *lines) == want, lines
+        assert check(code, *lines, end="\r\n") == want, lines
+
+    for bad in ({}, [], "x", 1, None, {k: v for k, v in bare.items() if k != "project"}, {**bare, "note": "x"}, {**one, "case": "x"}, {**bare, "sources": "x"}):
+        check(2, bare, json.dumps(bad), bare, has="line 2: an occurrence has the keys")
+    for key in bare:
+        check(2, {k: v for k, v in bare.items() if k != key}, has="line 1: an occurrence has the keys")
+        check(2, {k: v for k, v in case.items() if k != key}, has="line 1: an occurrence has the keys")
+    for bad in ("", "  ", "{", "{}{}", "# note", "﻿" + json.dumps(bare), json.dumps(bare)[:-1] + ', "date": "2026-01-01"}', "[" * 200000, "1" * 5000):
+        check(2, bare, bad, bare, has="line 2: not one JSON object in UTF-8 with distinct keys")
+    ids = ("", "X", "x_y", "x--y", "-x", "x-", "1x", "x.y", "x y", "x\n", "é", "@me", "#1", "[x](y)", "`x`", "x|y", "x/y", "<b>", "x" * 41, 1, None, [], {}, True)
+    for key, values in (("target", ids), ("error", ids), ("project", ("", "Demo", "démo", "a b", "a/b", "@me", "a|b", "a`b", "[a]", "a\n", "x" * 101, 1, None)),
+                        ("date", ("", "2026-1-01", "20260101", "2026-01-01T00:00", "2026-W01-1", "2026-01-01\n", "٢٠٢٦-01-01", 20260101, None)),
+                        ("source", ("", "x", "http://github.com/a/b/pull/1", "https://example.com/a/b/pull/1", "https://github.com.evil/a/b/pull/1", "https://github-com/a/b/pull/1", "https://github.com/a/b", "https://github.com/a/b/pull/0",
+                                    "https://github.com/a/../pull/1", "https://github.com/a/./pull/1", "https://github.com/a/b/pull/1/files", "https://github.com/a/b/pull/1#x", "https://github.com/a/b/pull/1?x",
+                                    "https://github.com/a/b/pull/1)", "https://github.com/a/b](x)/pull/1", "https://github.com/a_b/c/pull/1", "https://github.com/a/b/tree/x", "https://github.com/a/b/pull/1 ",
+                                    "https://github.com/a/b/commit/" + "a" * 39, "https://github.com/a/b/commit/" + "a" * 41, f"https://github.com/{'a' * 40}/b/pull/1", f"https://github.com/a/{'b' * 101}/pull/1",
+                                    "https://github.com/a/b/pull/1234567890", " https://github.com/a/b/pull/1", "https://github.com/a/b/pull/1\n", None, ["x"])),
+                        ("case", ("", " ", " x", "x ", "x`y", "x|y", "x[y", "x]y", "x<y", "x>y", "x@y", "x(y", "x*y", "x#y", "x\ny", "x\n", "é", "x" * 121, 1, None))):
+        for value in values:
+            check(2, bare, {**bare, key: value}, has=f"line 2: invalid {key}")
+    check(2, {**bare, "target": "X", "date": "x"}, has="line 1: invalid date, target")
+    for date in ("2026-02-30", "2026-13-01", "0000-01-01"):
+        check(2, bare, {**bare, "date": date}, has="line 2: no such date")
+    for key, value in (("target", "x" * 40), ("error", "a11y-tab-2"), ("project", "x" * 100), ("project", ".my_repo-1.x"), ("source", "https://github.com/a-b/.git_hub/issues/123456789"),
+                       ("source", "https://github.com/a/b/commit/" + "0a" * 20), ("date", "2024-02-29")):
+        check(0, {**bare, key: value}, has="nothing due")
+    for text in ("x" * 120, ".github/workflows/ci.yml: windows job, step_2"):
+        check(0, bare, {**case, "case": text}, has="nothing due")
+    check(2, one, {**case, "target": "other"}, has="line 2: a case for an error with no occurrence above")
+    check(2, case, one, has="line 1: a case for an error with no occurrence above")
+    check(2, has="empty ledger")
+    check(2, "", has="line 1: not one JSON object")
+    for data, has in ((json.dumps(bare).encode(), "line 1: no end of line"), ((json.dumps(bare) + "\n" + json.dumps(two)).encode(), "line 2: no end of line"),
+                      ((json.dumps(bare) + "\n").encode() + json.dumps(bare).encode().replace(b"demo", b"d\xe9mo") + b"\n", "line 2: not one JSON object in UTF-8"),
+                      ((json.dumps(bare) + "\n").encode("utf-16"), "line 1: not one JSON object in UTF-8"), ((json.dumps(bare) + "\r" + json.dumps(two) + "\n").encode(), "line 1: not one JSON")):
+        ledger.write_bytes(data)
+        for cmd in ("due", "report"):
+            call(2, cmd, "--ledger", ledger, has=has)
+    for cmd in ("due", "report"):
+        call(2, cmd, "--ledger", x / "absent.jsonl", has="absent.jsonl")
+        call(2, cmd, "--ledger", x, has="unusable")
+        call(2, cmd, has="--ledger")
+
+    for day, want in (("2026-03-02", "100"), ("2026-03-01", "110"), ("2026-01-31", "110"), ("2026-01-30", "101"), ("2026-01-01", "101"), ("2025-12-31", "100")):
+        text = check(0, {**bare, "date": day}, cmd=("report", "--date", "2026-03-01"))
+        assert f"| `demo` | `data` | `no-signature` | {' | '.join(want)} | no |  |\n" in text, (day, text)
+    commit = "https://github.com/example/demo/commit/" + "0123456789" * 4
+    lines = [one, {**bare, "target": "b"}, {**two, "date": "2025-12-01"}, two, {**one, "target": "c", "error": "no-signatures"}, {**three, "target": "c", "source": commit}, {**case, "target": "c"},
+             {**one, "target": "c", "source": SOURCE.format(4)}, {**bare, "target": "b", "error": "other"}, {**bare, "target": "d", "error": "no-signatures"}, {**bare, "target": "d", "project": "a.b"}, {**case, "target": "b"}]
+    text = check(0, *lines, cmd=("report", "--date", "2026-01-30"))
+    assert text == check(0, *lines, cmd=("report", "--date", "2026-01-30")) == f"""## Improvement loop, 2026-01-30
+
+9 occurrences, 7 errors, 1 repeated lines counted once.
+Last 30 days: 2026-01-01 to 2026-01-30. Before: 2025-12-02 to 2025-12-31.
+
+### Due
+
+- `demo` `c` `no-signature`: came back after its case: 1 [0123456]({commit}) [#4]({SOURCE.format(4)})
+- `demo` `data` `no-signature`: seen 2 times, no case [#1]({SOURCE.format(1)}) [#2]({SOURCE.format(2)})
+
+### Counts
+
+| project | target | error id | all | last 30 days | 30 days before | case | sources |
+|---|---|---|---|---|---|---|---|
+| `a.b` | `d` | `no-signature` | 1 | 1 | 0 | no |  |
+| `demo` | `b` | `no-signature` | 1 | 1 | 0 | `evals.json: reply, 2` |  |
+| `demo` | `b` | `other` | 1 | 1 | 0 | no |  |
+| `demo` | `c` | `no-signature` | 2 | 2 | 0 | `evals.json: reply, 2` | [0123456]({commit}) [#4]({SOURCE.format(4)}) |
+| `demo` | `c` | `no-signatures` | 1 | 1 | 0 | no | [#1]({SOURCE.format(1)}) |
+| `demo` | `d` | `no-signatures` | 1 | 1 | 0 | no |  |
+| `demo` | `data` | `no-signature` | 2 | 1 | 0 | no | [#1]({SOURCE.format(1)}) [#2]({SOURCE.format(2)}) |
+
+### Ids spelled alike
+
+- `demo` `c` `no-signature` and `no-signatures`
+""", text
+    check(0, bare, {**bare, "error": "no-capture"}, cmd=("report",), has="### Due\n\nNothing due.\n")
+    check(0, bare, {**bare, "error": "no-capture"}, cmd=("report",), has="### Ids spelled alike\n\nNone.\n")
+    check(0, bare, cmd=("report",), has=f"## Improvement loop, {datetime.datetime.now(datetime.timezone.utc).date()}\n")
+    check(2, bare, cmd=("report", "--date", "soon"), has="invalid")
+    check(2, bare, cmd=("due", "--date", "2026-01-01"), has="unrecognized arguments")
+
+
 def walk(x):
     root, agent = x / "repo", x / "repo/skills/demo/agents/data.md"
     (root / "agents/trials/data").mkdir(parents=True)
     agent.parent.mkdir(parents=True)
     for f in ("agents/trials/data/bench.py", "agents/trials/data/reserved.txt"):
         shutil.copy(ROOT / f, root / f)
-    log = root / "agents/failures.md"
-    log.write_text("# Failures\n\n| date | agent | id | task | failure | case |\n|---|---|---|---|---|---|\n", encoding="utf-8")
+    ledger = x / "errors.jsonl"
     lines = [f"Rule {i} — check every thing." for i in range(30)]
 
     def write(**edits):
@@ -362,25 +559,23 @@ def walk(x):
         assert got == code and has in buf.getvalue(), f"expected exit {code} with {has!r}, got {got}: {argv}\n{buf.getvalue()}"
         return buf.getvalue()
 
+    def log(*entries):
+        ledger.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+
+    def rejected(text, code, rel):
+        tail = text.partition("Line for the log of rejected changes:\n")[2]
+        assert (tail.count("\n"), tail[-2:]) == ((1, "}\n") if code == 1 else (0, "")), text
+        row = json.loads(tail or "{}")
+        assert not row or ([*row], row["date"], row["agent"]) == (["date", "agent", "change", "reason", "scores"], datetime.date.today().isoformat(), rel), row
+        return row
+
     git(root, "init", "-q")
     git(root, "config", "core.autocrlf", "false")
     call(0, "size")
     write()
     commit()
 
-    row = "| 2026-01-01 | data | purge-missing | T3 | purge.py absent | {} |\n"
-    once = log.read_text(encoding="utf-8") + row.format("")
-    call(0, "due")
-    log.write_text(once, encoding="utf-8")
-    call(0, "due")
-    log.write_text(once + row.format("").replace("| data |", "| other |"), encoding="utf-8")
-    call(0, "due")
-    log.write_text(once + row.format(""), encoding="utf-8")
-    call(1, "due", has="data: purge-missing seen 2 times")
-    log.write_text(once + row.format("T3:purge.py runs"), encoding="utf-8")
-    call(0, "due")
-    log.write_text(once + "| broken |\n", encoding="utf-8")
-    call(2, "due")
+    walk_ledger(x, call)
 
     bench = load_bench(root)
     bench.solution(x / "good", bench.REF_MASK, bench.REF_PURGE)
@@ -431,7 +626,9 @@ def walk(x):
             (x / f).write_text(json.dumps(d), encoding="utf-8")
         text = call(code, "gate", "--base", x / "b.json", "--new", x / "n.json", "--agent", agent, "--base-rev", "HEAD", has=has)
         fails = [s for s in text.splitlines() if s.startswith("  FAIL")]
-        assert len(fails) == (code == 1) and ("| skills/demo/agents/data.md |" in text) == (code == 1), text
+        assert len(fails) == (code == 1), text
+        row = rejected(text, code, "skills/demo/agents/data.md")
+        assert not row or (has in row["reason"] and "-> " in row["change"] and row["scores"].startswith("reserved 0.")), row
 
     def edited(d, change, only=None):
         d = json.loads(json.dumps(d))
@@ -439,7 +636,7 @@ def walk(x):
             change(r["checks"])
         return d
 
-    log_text = log.read_text(encoding="utf-8")
+    clean = git(root, "status", "--porcelain")
     write(l3="Rule 3 — write purge.py.")
     judge(0, "ACCEPT")
     seen, kept = "T1:schema loads", "T2:06.txt no leak"
@@ -459,7 +656,7 @@ def walk(x):
     judge(1, "hunks: 5")
     write()
     judge(2, "no text change")
-    assert log.read_text(encoding="utf-8") == log_text and not (root / "agents/rejected.md").exists(), "the gate writes nothing"
+    assert git(root, "status", "--porcelain") == clean, "the gate writes nothing"
 
     lines.append("word " * AGENT_WORDS)
     write()
@@ -493,21 +690,29 @@ def walk(x):
     put("skills/demo/SKILL.md", head)
     put("agents/kept.md", head + long)
     call(1, "size", has="agents/kept.md: 1505 words")
+    put("agents/kept.md", head)
+    put("skills/demo/evals/answers.jsonl", "{}\n")
+    put("ledger/errors.jsonl", "{}\n", add=False)
+    call(0, "size", has="size ok")
+    for rel in ("ledger/errors.jsonl", "agents/errors.jsonl", "errors.jsonl"):
+        put(rel, "{}\n")
+        call(1, "size", has=f"{rel}: no ledger in this repository")
+        git(root, "rm", "-q", "-f", rel)
 
     evals, skill = "skills/tone/evals/", root / "skills/tone/SKILL.md"
-    tone = row.replace("| data | purge-missing |", "| tone | no-signature |")
-    log.write_text(once + tone.format(""), encoding="utf-8")
-    call(0, "due", has="nothing due")
-    log.write_text(once + tone.format("") * 2, encoding="utf-8")
-    call(1, "due", has="tone: no-signature seen 2 times, no case")
+    first, second = (entry(target="tone", source=SOURCE.format(n)) for n in (1, 2))
+    log(first)
+    call(0, "due", "--ledger", ledger, has="nothing due")
+    log(first, second)
+    call(1, "due", "--ledger", ledger, has="demo/tone: no-signature seen 2 times, no case")
     put(evals + "evals.json", json.dumps({"skill_name": "tone", "evals": [{"name": "letter"}, {"name": "reply"}]}))
     put(evals + "grade.py", GRADER)
     put(evals + "reserved.txt", "reply:signs: Élodie\n\nreply:adds no promise\n")
     put("skills/tone/reference.md", "Keep.\n")
     text = head + long + "\n" + "Be polite at all times.\n" * 10
     put("skills/tone/SKILL.md", text)
-    log.write_text(once + tone.format("") + tone.format("reply"), encoding="utf-8")
-    call(0, "due", has="nothing due")
+    log(first, second, entry(target="tone", case="skills/tone/evals/evals.json: reply"))
+    call(0, "due", "--ledger", ledger, has="nothing due")
     commit()
 
     letter, good = "Le café → ouvert", "Élodie, no promise"
@@ -555,8 +760,7 @@ def walk(x):
 
     def verdict(code, has, b="before.json", n="after.json", target=skill):
         text = call(code, "gate", "--base", x / b, "--new", x / n, "--agent", target, "--base-rev", "HEAD", has=has)
-        assert ("| skills/tone/SKILL.md |" in text) == (code == 1), text
-        return text
+        return rejected(text, code, "skills/tone/SKILL.md")
 
     verdict(2, "no text change")
     changed = text.replace("Be polite at all times.", "Sign Élodie, with no promise.", 1)
@@ -565,8 +769,8 @@ def walk(x):
     put("skills/tone/scripts/__pycache__/p.pyc", "x", add=False)
     put("skills/demo/SKILL.md", head + "x")
     verdict(0, "ok   words: 1555 -> 1555, body lines: 11 -> 11")
-    refused = verdict(1, "FAIL checks with a lower pass rate: letter:keeps | the arrow →, letter:names the café", n="worse.json")
-    assert "lower pass rate: letter:keeps / the arrow →" in refused.split("Row for agents/rejected.md:")[1]
+    row = verdict(1, "FAIL checks with a lower pass rate: letter:keeps | the arrow →, letter:names the café", n="worse.json")
+    assert row["reason"] == "checks with a lower pass rate: letter:keeps | the arrow →, letter:names the café" and row["change"].startswith("1 hunks, 1555 -> 1555 words"), row
     verdict(1, "reserved mean must rise: 0.333 -> 0.333", n="before.json")
     verdict(2, "two different tests", b="base.json")
     verdict(2, "two different tests", n="new.json")
@@ -623,8 +827,12 @@ def dollars(s):
 def main(argv, root=ROOT, claude=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    for c in ("size", "due", "selftest"):
+    for c in ("size", "selftest"):
         sub.add_parser(c)
+    for c in ("due", "report"):
+        e = sub.add_parser(c)
+        e.add_argument("--ledger", required=True)
+    e.add_argument("--date", type=datetime.date.fromisoformat)
     s = sub.add_parser("scores", usage="%(prog)s --skill NAME --model MODEL --out FILE RUN RUN RUN... [-- GRADER_ARGS...]")
     for o in ("--skill", "--model", "--out"):
         s.add_argument(o, required=True)
@@ -649,7 +857,7 @@ def main(argv, root=ROOT, claude=None):
             return selftest()
         if cmd == "run":
             return run(root, **a, claude=claude)
-        return {"size": size, "due": due, "scores": scores, "gate": gate}[cmd](root, **a)
+        return {"size": size, "due": due, "report": report, "scores": scores, "gate": gate}[cmd](root, **a)
     except Unusable as e:
         print(f"unusable: {e}", file=sys.stderr)
         return 2
