@@ -92,6 +92,12 @@ jobs:
           python agents/loop.py selftest
           python agents/loop.py size
 
+      - name: Skills, evals and docs validators
+        run: |
+          python scripts/validate-skills.py
+          python scripts/validate-evals.py
+          python scripts/check-docs-sync.py
+
       - name: Decision records
         run: |
           python scripts/check-adr.py --self-test

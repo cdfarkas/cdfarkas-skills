@@ -85,6 +85,9 @@ README passes it. Its job is to make forgetting the docs a CI failure instead of
 follow-up nobody opens. Run against the tree that PR #7 left behind, it fails on five
 lines, which is what it should have done at the time.
 
+CI also runs `validate-skills.py`, `validate-evals.py` and `check-docs-sync.py` on Windows; that
+checkout is shallow, so the docs check applies only its structural rules there.
+
 ## Agents are tried against the generalist
 
 The same rule holds for an agent: the evidence rule in [`../CLAUDE.md`](../CLAUDE.md)

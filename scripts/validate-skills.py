@@ -44,7 +44,7 @@ def parse_frontmatter(text: str) -> dict[str, str]:
 
 
 def check(path: Path) -> list[str]:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     errors: list[str] = []
     fm = parse_frontmatter(text)
 
@@ -79,7 +79,7 @@ def check(path: Path) -> list[str]:
             errors.append(f"{path}: references '{ref}', which does not exist")
 
     for script in sorted(path.parent.glob("scripts/*.sh")):
-        code = script.read_text()
+        code = script.read_text(encoding="utf-8")
         if MUTATING_RE.search(code) and "--dry-run" not in code:
             errors.append(f"{script}: changes state (push / PR write / write API) but takes no --dry-run")
 
@@ -88,7 +88,7 @@ def check(path: Path) -> list[str]:
 
 def check_hooks(manifest: Path) -> list[str]:
     errors: list[str] = []
-    for plugin in json.loads(manifest.read_text())["plugins"]:
+    for plugin in json.loads(manifest.read_text(encoding="utf-8"))["plugins"]:
         if "hooks" not in plugin:
             continue
         where, hooks = f"{manifest}: {plugin['name']}", plugin["hooks"]
@@ -105,6 +105,7 @@ def check_hooks(manifest: Path) -> list[str]:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     skills = sorted(Path("skills").glob("*/SKILL.md"))
     if not skills:
         print("no skills found under skills/*/SKILL.md")

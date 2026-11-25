@@ -35,7 +35,7 @@ DEP_KEYS = ("dependencies", "devDependencies", "peerDependencies", "optionalDepe
 
 
 def git(*args: str) -> str:
-    return subprocess.run(["git", *args], check=True, capture_output=True, text=True).stdout
+    return subprocess.run(["git", *args], check=True, capture_output=True, encoding="utf-8").stdout
 
 
 def structural(skills: list[Path], readme: str) -> list[str]:
@@ -47,7 +47,7 @@ def structural(skills: list[Path], readme: str) -> list[str]:
                 errors.append(f"{skill}/{required} is missing")
         if f"](skills/{name}/)" not in readme:
             errors.append(f"root README table has no row linking skills/{name}/")
-        skill_readme = (skill / "README.md").read_text() if (skill / "README.md").is_file() else ""
+        skill_readme = (skill / "README.md").read_text(encoding="utf-8") if (skill / "README.md").is_file() else ""
         if (skill / "evals/RESULTS.md").is_file():
             if not re.search(rf"^\| `{re.escape(name)}` \|.*RESULTS\.md", readme, re.M):
                 errors.append(f"root README 'Scores at a glance' has no {name} row")
@@ -79,7 +79,7 @@ def deps_only(mb: str, path: str) -> bool:
         before = json.loads(git("show", f"{mb}:{path}"))
     except subprocess.CalledProcessError:
         return False
-    after = json.loads(Path(path).read_text())
+    after = json.loads(Path(path).read_text(encoding="utf-8"))
     return {k: v for k, v in before.items() if k not in DEP_KEYS} == {k: v for k, v in after.items() if k not in DEP_KEYS}
 
 
@@ -88,7 +88,7 @@ def diff_based(base: str, skills: list[Path]) -> list[str]:
     mb = git("merge-base", base, "HEAD").strip()
     changed = set(git("diff", "--name-only", mb).split())
     for skill in skills:
-        prefix = f"{skill}/"
+        prefix = f"{skill.as_posix()}/"
         code = any(f.startswith(prefix + d) and not deps_only(mb, f) for f in changed for d in CODE_DIRS)
         code = code or prefix + "SKILL.md" in changed
         docs = prefix + "README.md" in changed or prefix + "reference.md" in changed
@@ -99,18 +99,19 @@ def diff_based(base: str, skills: list[Path]) -> list[str]:
         errors.append(f"tooling changed, docs untouched ({' / '.join(TOOLING_DOCS)})")
     if MANIFEST in changed and Path(MANIFEST).is_file():
         before = plugin_names(git("show", f"{base}:{MANIFEST}"))
-        after = plugin_names(Path(MANIFEST).read_text())
+        after = plugin_names(Path(MANIFEST).read_text(encoding="utf-8"))
         if before != after and str(ROOT_README) not in changed:
             errors.append(f"plugins changed in {MANIFEST} ({', '.join(sorted(before ^ after))}), root README untouched")
     return errors
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     if len(sys.argv) > 2:
         print(__doc__)
         return 2
     skills = sorted(p for p in Path("skills").iterdir() if p.is_dir())
-    readme = ROOT_README.read_text() if ROOT_README.is_file() else ""
+    readme = ROOT_README.read_text(encoding="utf-8") if ROOT_README.is_file() else ""
     errors = structural(skills, readme)
     if len(sys.argv) == 2:
         errors += diff_based(sys.argv[1], skills)
