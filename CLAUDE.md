@@ -24,6 +24,9 @@ removed: a new one supersedes it, and only its Status changes.
 `python3 scripts/check-adr.py origin/main` enforces it.
 
 Agents start from existing ones and are trialled before being kept (ADR 0001).
+Profession knowledge goes in a skill; an agent file exists only for a mechanical reason it states,
+and work is split by context, not by type of work (ADR 0003). Its rules change only after reading the
+latest primary sources, which the superseding ADR lists with the date read.
 The tool of the improvement loop is public, the record of errors stays outside this repository (ADR 0002):
 no ledger, no row of a real error, invented examples only.
 
@@ -34,10 +37,13 @@ no ledger, no row of a real error, invented examples only.
    the script and how to read its output. See `docs/how-these-skills-are-built.md`.
 2. **Evaluate with `skill-creator`, with-skill versus without-skill.** Use the
    `skill-creator` skill (Anthropic's first-party plugin) to run every prompt in
-   `skills/<name>/evals/evals.json` twice — one subagent with the skill, one without —
-   in isolated sessions, and grade both with the skill's own `evals/grade.py`.
+   `skills/<name>/evals/evals.json` with a subagent that has the skill and one that does not,
+   in isolated sessions, and grade both with the skill's own `evals/grade.py`. Run each arm
+   more than once, on more than one model when possible, and mark a single-run result as such.
+   Check that the skill triggers on its eval prompts and not on unrelated ones.
    Prompts must be what a real person would type. A skill that scores the same as the
-   baseline is decoration and does not ship.
+   baseline is decoration and does not ship. Keep a skill small and focused, and a change
+   the improvement loop proposes is decided by a person (ADR 0003).
 3. **Publish the evaluation in `evals/RESULTS.md`**, in the shape of
    `skills/pr-todo/evals/RESULTS.md`: method, the run date, a scores table
    (with the skill / without), what the baselines got wrong, and every run that did
