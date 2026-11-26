@@ -55,7 +55,11 @@ never as a zero.
 ## Agent trials
 
 [`agents/`](agents/) compares an agent's role file with the generalist on the same invented
-task, graded by a script, and holds the loop that improves an agent without growing its file.
+task, graded by a script, and holds the loop that improves an agent or a skill without growing
+its file. Profession knowledge goes in skills; an agent exists only for a mechanical reason it
+states, such as a check by an agent that did not see the work, restricted tools or a fixed model
+([ADR 0003](docs/adr/0003-skills-over-role-agents.md)), and only after a trial against the
+generalist ([ADR 0001](docs/adr/0001-start-from-existing-agents.md)).
 First result, on an earlier version of the data trial: 32/32 for both, so no gain was shown.
 The published version has not been run yet. Details:
 [RESULTS.md](agents/trials/data/RESULTS.md). No agent is shipped from there.
@@ -100,9 +104,12 @@ is Claude Code specific.
 1. **Script over prose.** If two agents could read a sentence and produce different
    output, it is code, not a sentence. The script carries the behaviour; `SKILL.md`
    says when to run it.
-2. **Evaluated with versus without.** Every prompt in `evals/evals.json` runs twice, one
-   agent with the skill and one without, graded by the skill's own `evals/grade.py`. A
-   skill that scores the same as the baseline does not ship.
+2. **Evaluated with versus without.** Every prompt in `evals/evals.json` runs with an
+   agent that has the skill and one that does not, graded by the skill's own
+   `evals/grade.py`. A skill that scores the same as the baseline does not ship. New runs
+   repeat each arm, on more than one model when possible, and check that the skill
+   triggers on its prompts and not on unrelated ones
+   ([ADR 0003](docs/adr/0003-skills-over-role-agents.md)).
 3. **Results published, failures included.** `evals/RESULTS.md` carries the method, the
    run date, the scores table, what the baselines got wrong, and every run that did not
    complete, reported as not measured. The evidence rule, for agents too, is in

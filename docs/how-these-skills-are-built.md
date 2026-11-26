@@ -22,8 +22,10 @@ is code.
 The method, per skill:
 
 1. Write 3 prompts a real person would actually type, in the words they would use.
-2. Run each one twice — an agent **with** the skill, an agent **without** — in
-   isolated sessions.
+2. Run each one with an agent **with** the skill and an agent **without** it, in
+   isolated sessions, more than once per arm and on more than one model when possible.
+   A result from a single run says so. Check that the skill triggers on these prompts
+   and not on unrelated ones: a skill that is never loaded brings nothing.
 3. Grade both with a script, not by reading. Assertions are regex over the answer
    text, so a rerun grades identically and a disagreement is a bug in the
    assertion rather than noise.
@@ -31,7 +33,9 @@ The method, per skill:
 5. Commit the prompts, the assertions, the grader and the scores.
 
 The baseline matters more than the score. A skill that scores 7/7 where an agent
-without it also scores 7/7 is decoration. What justifies a skill is the gap.
+without it also scores 7/7 is decoration. What justifies a skill is the gap. Keep
+each skill small and focused: in SkillsBench (arXiv 2602.12670), focused skills with
+at most three modules beat large bundles ([ADR 0003](adr/0003-skills-over-role-agents.md)).
 
 For `pr-todo`, the run found three defects that no amount of code review would
 have surfaced, because all three were about what the output *said*, not what the
@@ -95,6 +99,17 @@ applies, and the baseline is the generalist, with no role file, on the same task
 first trial, [`../agents/trials/data/`](../agents/trials/data/RESULTS.md), gave both arms
 full marks, so it showed no gain and has to be made harder. Where the agents come from and how a
 trial decides are recorded in [ADR 0001](adr/0001-start-from-existing-agents.md).
+
+What an agent file is for is recorded in [ADR 0003](adr/0003-skills-over-role-agents.md).
+Profession knowledge goes in a skill. An agent file exists only for a mechanical reason it
+states: a check by an agent that did not see the work, parallel work in fresh contexts,
+restricted tools, a fixed model, an output contract read by a script, or a conflicting
+behaviour mode. The studies read found no accuracy gain from a persona and a gain from
+curated skills, and a skill's `model` and tool fields hold for one turn where an agent
+file's apply on every call. Work is split by context, not by type of work. Before anyone
+changes these rules, they read the latest primary sources, and the superseding ADR lists
+them with the date read. The 32/32 data trial is not evidence either way: one run per arm,
+both arms full.
 
 CI runs the self-tests of the trial and of the loop on Linux and Windows. The trial must
 give the reference solution full marks, fail a naive one where planned and give an empty

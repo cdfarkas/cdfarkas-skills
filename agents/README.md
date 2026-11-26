@@ -4,6 +4,14 @@ The scripts measure. **A person accepts or refuses every change**, even after an
 The evidence rule is in [`../CLAUDE.md`](../CLAUDE.md), section Evidence.
 Agents start from existing ones and are trialled before being kept: [ADR 0001](../docs/adr/0001-start-from-existing-agents.md).
 
+What an agent file may hold: [ADR 0003](../docs/adr/0003-skills-over-role-agents.md).
+
+- Profession and domain knowledge goes in a skill, not in an agent file.
+- An agent file exists only for a mechanical reason, which it states: a check by an agent that did not see the work being done, parallel work in fresh contexts, tools restricted or removed, a fixed model, an output contract read by a script, or a behaviour mode that conflicts with the session's.
+- It names the skills it preloads in `skills:`, its description says when to use it, and it has no persona prose: no identity, character or invented memory.
+- Work is split by context, not by type of work: no planner, implementer, tester and reviewer chain by default.
+- Before these rules change, the latest primary sources are read, and the superseding ADR lists them with the date read.
+
 1. **Log** the error in a ledger kept outside this repository. A single error changes nothing.
 2. **Same error twice** for one target, or once more after its case (`due`): write a test case first, and log it with `case`.
 3. **Choose the place**: a script or a hook, else a file read on demand, else a line in the agent.
